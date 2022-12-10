@@ -37,5 +37,8 @@
     <None Include="shader.frag">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="shader.glsl">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

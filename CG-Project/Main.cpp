@@ -13,15 +13,38 @@
 #include "glm/gtc/type_ptr.hpp"
 #include "stb_image.h"
 
+#ifdef _MSC_VER
+#define ASSERT(x) if (!(x)) __debugbreak();
+#else
+#define ASSERT(x) assert(x)
+#endif
+#define GlCall(x) GlClearError();\
+	x;\
+	ASSERT(GlLogCall(#x, __FILE__, __LINE__))
+
+void GlClearError() {
+    while (glGetError() != GL_NO_ERROR);
+}
+
+bool GlLogCall(const char* function, const char* file, int line) {
+    if (GLenum error = glGetError()) {
+        std::cout << "[OpenGL Error] (" << error << "): " << function <<
+            " " << file << ":" << line << std::endl;
+        return false;
+    }
+    return true;
+}
+
 using namespace std;
 
-string shdrSrc(string path) 
+string shdrSrc(string path)
 {
     ifstream f(path);
     stringstream buffer;
     buffer<<f.rdbuf();
     f.close();
-    return buffer.str();
+    string s = buffer.str();
+    return s;
 }
 
 unsigned int loadCubemap(vector<string> faces)
@@ -62,7 +85,7 @@ int main()
 
     /* Creating a windowed mode window and its OpenGL context */
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
-    window = glfwCreateWindow(640, 480, "Path Tracing", NULL, NULL);
+    window = glfwCreateWindow(900, 900, "Path Tracing", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -85,7 +108,7 @@ int main()
     int height = 900;
     // Texture definition
 
-        int tw = width, th = height;
+    int tw = width, th = height;
     GLuint tex_out;
     glGenTextures(1, &tex_out);
     glActiveTexture(GL_TEXTURE0);
@@ -99,37 +122,65 @@ int main()
 
     glBindTexture(GL_TEXTURE_2D, 0);
 
+    //Work groups
+
+    int work_grp_cnt[3];
+
+    for (int i = 0; i < 3; i++) 
+        glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, i, &work_grp_cnt[i]);
+    cout<<"Global work group counts x:"<<work_grp_cnt[0]<<" y: "<<work_grp_cnt[1]<<" z: "<< work_grp_cnt[2]<<"\n";
+
+    int work_grp_inv;
+    glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &work_grp_inv);
+    cout<<"Local work group invocations: "<<work_grp_inv<<"\n";
+
+    int success;
+    char infoLog[512];
     string shaderSrc;
 
     shaderSrc = shdrSrc("shader.vert");
-    const char* vertSrc;
-    vertSrc = shaderSrc.c_str();
-
-    shaderSrc = shdrSrc("shader.frag");
-    const char* fragSrc;
-    fragSrc = shaderSrc.c_str();
+    const char* vertSrc = shaderSrc.c_str();
 
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertexShader, 1, &vertSrc, NULL);
     glCompileShader(vertexShader);
-    int success;
-    char infoLog[512];
     glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success) 
+    if (!success)
     {
-        cout<<"Vertex error" << endl;
+        cout << "ERROR: Vertex Shader compilation failed!! \n";
         glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        cout << infoLog << endl;
+        cout << infoLog << "\n";
     }
+
+    shaderSrc = shdrSrc("shader.frag");
+    const char* fragSrc = shaderSrc.c_str();
 
     GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragmentShader, 1, &fragSrc, NULL);
     glCompileShader(fragmentShader);
     glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        cout << "Fragment error" << endl;
+    if (!success)
+    {
+        cout << "ERROR: Fragment Shader compilation failed!! \n";
         glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        cout << infoLog << endl;
+        cout << infoLog << "\n";
+    }
+
+    shaderSrc = shdrSrc("shader.glsl");
+    const char* computeSrc = shaderSrc.c_str();
+
+    GLuint computeShader = glCreateShader(GL_COMPUTE_SHADER);
+    glShaderSource(computeShader, 1, &computeSrc, NULL);
+    GlCall(glCompileShader(computeShader));
+    GlCall(glGetShaderiv(computeShader, GL_COMPILE_STATUS, &success));
+    if (!success)
+    {
+        cout<<"ERROR: Compute Shader compilation failed!! \n";
+        int length;
+        GlCall(glGetShaderiv(computeShader, GL_INFO_LOG_LENGTH, &length));
+        char* message = (char*)alloca(sizeof(char) * length);
+        GlCall(glGetShaderInfoLog(computeShader, length, &length, message));
+        cout << message << "\n";
     }
 
     GLuint quadProgram = glCreateProgram();
@@ -137,8 +188,17 @@ int main()
     glAttachShader(quadProgram, fragmentShader);
     glLinkProgram(quadProgram);
 
+    GLuint pathtProgram = glCreateProgram();
+    glAttachShader(pathtProgram, computeShader);
+    glLinkProgram(pathtProgram);
+
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
+    glDeleteShader(computeShader);
+
+    
+
+    //Buffers
 
     float vertices[] =
     {
@@ -150,7 +210,6 @@ int main()
         -1,1,0,0,1
     };
 
-    //Buffers
     GLuint VAO, VBO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
@@ -207,17 +266,16 @@ int main()
     /* Looping until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
-        glUseProgram(rayProgram);
-
-        int sizeLoc = glGetUniformLocation(rayProgram, "size");
+        glUseProgram(pathtProgram);
+        int sizeLoc = glGetUniformLocation(pathtProgram, "size");
         //		glUniform1f(sizeLoc, sizeof(mesh) / 4);
-        int seedLoc = glGetUniformLocation(rayProgram, "seed");
+        int seedLoc = glGetUniformLocation(pathtProgram, "seed");
         glUniform1f(seedLoc, seed);
         seed += 3.1415f;
-        int appertureLoc = glGetUniformLocation(rayProgram, "aperture");
+        int appertureLoc = glGetUniformLocation(pathtProgram, "aperture");
         glUniform4fv(appertureLoc, 1, aperture);
 
-        int rotateLoc = glGetUniformLocation(rayProgram, "rotate_matrix");
+        int rotateLoc = glGetUniformLocation(pathtProgram, "rotate_matrix");
         glUniformMatrix4fv(rotateLoc, 1, GL_FALSE, glm::value_ptr(rot_matrix));
         glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
         glDispatchCompute((GLuint)tw, (GLuint)th, 1);
