@@ -104,11 +104,7 @@ int main()
 	}
 
 
-    int width = 900;
-    int height = 900;
-    // Texture definition
-
-    int tw = width, th = height;
+    int tw = 900, th = 900;
     GLuint tex_out;
     glGenTextures(1, &tex_out);
     glActiveTexture(GL_TEXTURE0);
@@ -121,8 +117,6 @@ int main()
     glBindImageTexture(0, tex_out, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
     glBindTexture(GL_TEXTURE_2D, 0);
-
-    //Work groups
 
     int work_grp_cnt[3];
 
@@ -196,10 +190,6 @@ int main()
     glDeleteShader(fragmentShader);
     glDeleteShader(computeShader);
 
-    
-
-    //Buffers
-
     float vertices[] =
     {
         1,1,0,1,1,
@@ -261,14 +251,12 @@ int main()
     float seed = 0.5f;
     iter = 0.0f;
     rot_matrix = glm::rotate(rot_matrix, glm::radians(5.0f), glm::vec3(0.0, 1.0, 0.0));
-    //Loop
 
     /* Looping until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
         glUseProgram(pathtProgram);
         int sizeLoc = glGetUniformLocation(pathtProgram, "size");
-        //		glUniform1f(sizeLoc, sizeof(mesh) / 4);
         int seedLoc = glGetUniformLocation(pathtProgram, "seed");
         glUniform1f(seedLoc, seed);
         seed += 3.1415f;
@@ -281,7 +269,6 @@ int main()
         glDispatchCompute((GLuint)tw, (GLuint)th, 1);
 
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-        //		glClear(GL_COLOR_BUFFER_BIT);
         glUseProgram(quadProgram);
         glBindVertexArray(VAO);
         glActiveTexture(GL_TEXTURE0);

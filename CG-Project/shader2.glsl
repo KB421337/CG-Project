@@ -36,6 +36,13 @@ struct RayHit
     vec3 specular;	
 };
 
+struct Path
+{
+	int pathLen;
+	Ray rays[10];
+	RayHit rayhits[10];
+};
+
 RayHit CreateRayHit()
 {
     RayHit hit;
@@ -517,6 +524,18 @@ vec3 Shade(inout Ray ray, RayHit hit)
 	}
 }
 
+float pd(int xl,  int ld) {
+	if(ld >= xl) return 0;
+	if(ld <= 0) return 0;
+
+	if(ld <= xl/2) {
+		float h1 = 1/(xl/2 * (xl/2 + 1));
+		return h1 * ld;
+	}
+
+
+}
+
 /* Function to loop through all pixels and fill them with a colour */
 void main()
 {
@@ -529,11 +548,19 @@ void main()
 	vec4 initial = vec4(normalize(vec3(x*max_x, y*max_y, 0.0) - ray.org).xyzz);
 	ray.dir = vec3((rotate_matrix * initial).xyz);
 	ray.nrg = vec3(1.0f);
+
+	Path path;
+	path.pathLen = 0;
+
 	vec3 result = vec3(0.0, 0.0, 0.0);
 	for (int i = 1; i <= numHits; i++)
 	{
         RayHit hit = Trace(ray);
-        result += ray.nrg*Shade(ray,hit);    
+        result += ray.nrg*Shade(ray,hit); 
+		
+		path.rayhits[path.pathLen++] = hit;
+		path.rays[path.pathLen-1] = ray;
+
         if (ray.nrg.x == 0.0 && ray.nrg.y == 0.0 && ray.nrg.y == 0.0)
 			break;
     }
