@@ -1,3 +1,11 @@
+// IS F311: Computer Graphics - Project   
+// - Anish Kacham          | 2019A7PS0091H
+// - Arjav Garg            | 2019A7PS0068H
+// - Kaustubh Bhanj        | 2019A7PS0009H
+// - Kevin K.Biju          | 2019A7PS0045H
+// - Nishith Kumar         | 2020A7PS0157H
+// - Shreyas Gupta         | 2019A7PS0121H
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -31,7 +39,7 @@ bool GlLogCall(const char* func, const char* file, int line)
 {
     if (GLenum error = glGetError())
     {
-        cout<<"[OpenGL Error] ("<<error<<"): "<<func<<" "<<file<<":"<<line<<endl;
+        cout << "[OpenGL Error] (" << error << "): " << func << " " << file << ":" << line << "\n";
         return false;
     }
     return true;
@@ -41,7 +49,7 @@ string shdrSrc(string path)
 {
     ifstream f(path);
     stringstream buffer;
-    buffer<<f.rdbuf();
+    buffer << f.rdbuf();
     f.close();
     string s = buffer.str();
     return s;
@@ -63,7 +71,7 @@ unsigned int loadCubemap(vector<string> faces)
         }
         else
         {
-            cout<<"Cubemap tex failed to load at path: "<<faces[i]<<"\n";
+            cout << "Cubemap tex failed to load at path: " << faces[i] << "\n";
             stbi_image_free(data);
         }
     }
@@ -85,7 +93,7 @@ int main()
 
     /* Creating a windowed mode window and its OpenGL context */
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
-    window = glfwCreateWindow(900, 900, "Path Tracing", NULL, NULL);
+    window = glfwCreateWindow(900, 900, "Metropolis Light Transport", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -99,30 +107,30 @@ int main()
     /* Checking if GLAD initialized successfully */
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) 
     {
-		cout<<"GLAD failed to initialize successfully!! \n";
+		cout << "GLAD failed to initialize successfully!! \n";
 		return -1;
 	}
 
     int texWid = 900, texHt = 900;
-    GLuint tex_out;
-    glGenTextures(1, &tex_out);
+    GLuint texOut;
+    glGenTextures(1, &texOut);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, tex_out);
+    glBindTexture(GL_TEXTURE_2D, texOut);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, texWid, texHt, 0, GL_RGBA, GL_FLOAT, NULL);
-    glBindImageTexture(0, tex_out, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+    glBindImageTexture(0, texOut, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    int work_grp_cnt[3], work_grp_inv;
+    int wrkGrpCnt[3], wrkGrpInv;
     for (int i = 0; i < 3; i++) 
-        glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, i, &work_grp_cnt[i]);
-    cout<<"Global work group counts x:"<<work_grp_cnt[0]<<" y: "<<work_grp_cnt[1]<<" z: "<< work_grp_cnt[2]<<"\n";
-    glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &work_grp_inv);
-    cout<<"Local work group invocations: "<<work_grp_inv<<"\n";
+        glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, i, &wrkGrpCnt[i]);
+    cout << "Global work group counts x:" << wrkGrpCnt[0] << " y: " << wrkGrpCnt[1] << " z: " <<  wrkGrpCnt[2] << "\n";
+    glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &wrkGrpInv);
+    cout << "Local work group invocations: " << wrkGrpInv << "\n";
 
     int success;
     char infoLog[512];
@@ -130,28 +138,28 @@ int main()
 
     shaderSrc = shdrSrc("shader.vert");
     const char* vertSrc = shaderSrc.c_str();
-    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertSrc, NULL);
-    glCompileShader(vertexShader);
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+    GLuint vertShader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertShader, 1, &vertSrc, NULL);
+    glCompileShader(vertShader);
+    glGetShaderiv(vertShader, GL_COMPILE_STATUS, &success);
     if (!success)
     {
-        cout<<"ERROR: Vertex Shader compilation failed!! \n";
-        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        cout<<infoLog<<"\n";
+        cout << "ERROR: Vertex Shader compilation failed!! \n";
+        glGetShaderInfoLog(vertShader, 512, NULL, infoLog);
+        cout << infoLog << "\n";
     }
 
     shaderSrc = shdrSrc("shader.frag");
     const char* fragSrc = shaderSrc.c_str();
-    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragSrc, NULL);
-    glCompileShader(fragmentShader);
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+    GLuint fragShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragShader, 1, &fragSrc, NULL);
+    glCompileShader(fragShader);
+    glGetShaderiv(fragShader, GL_COMPILE_STATUS, &success);
     if (!success)
     {
-        cout<<"ERROR: Fragment Shader compilation failed!! \n";
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        cout<<infoLog<<"\n";
+        cout << "ERROR: Fragment Shader compilation failed!! \n";
+        glGetShaderInfoLog(fragShader, 512, NULL, infoLog);
+        cout << infoLog << "\n";
     }
 
     shaderSrc = shdrSrc("shader2.glsl");
@@ -162,35 +170,49 @@ int main()
     GlCall(glGetShaderiv(computeShader, GL_COMPILE_STATUS, &success));
     if (!success)
     {
-        cout<<"ERROR: Compute Shader compilation failed!! \n";
-        int length;
-        GlCall(glGetShaderiv(computeShader, GL_INFO_LOG_LENGTH, &length));
-        char* message = (char*)alloca(sizeof(char)*length);
-        GlCall(glGetShaderInfoLog(computeShader, length, &length, message));
-        cout<<message<<"\n";
+        cout << "ERROR: Compute Shader compilation failed!! \n";
+        int len;
+        GlCall(glGetShaderiv(computeShader, GL_INFO_LOG_LENGTH, &len));
+        char* msg = (char*)alloca(sizeof(char)*len);
+        GlCall(glGetShaderInfoLog(computeShader, len, &len, msg));
+        cout << msg << "\n";
     }
 
-    GLuint quadProgram = glCreateProgram();
-    glAttachShader(quadProgram, vertexShader);
-    glAttachShader(quadProgram, fragmentShader);
-    glLinkProgram(quadProgram);
+    GLuint vnfProg = glCreateProgram();
+    glAttachShader(vnfProg, vertShader);
+    glAttachShader(vnfProg, fragShader);
+    glLinkProgram(vnfProg);
+    glGetProgramiv(vnfProg, GL_LINK_STATUS, &success);
+    if (!success)
+    {
+        cout << "ERROR: VertFrag Shader linking failed!! \n";
+        glGetProgramInfoLog(vnfProg, 512, NULL, infoLog);
+        cout << infoLog << "\n";
+    }
 
-    GLuint pathtProgram = glCreateProgram();
-    glAttachShader(pathtProgram, computeShader);
-    glLinkProgram(pathtProgram);
+    GLuint mltProg = glCreateProgram();
+    glAttachShader(mltProg, computeShader);
+    glLinkProgram(mltProg);
+    glGetProgramiv(mltProg, GL_LINK_STATUS, &success);
+    if (!success)
+    {
+        cout << "ERROR: MLT Shader linking failed!! \n";
+        glGetProgramInfoLog(mltProg, 512, NULL, infoLog);
+        cout << infoLog << "\n";
+    }
 
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
+    glDeleteShader(vertShader);
+    glDeleteShader(fragShader);
     glDeleteShader(computeShader);
 
     float verts[] =
     {
-        1,1,0,1,1,
-        1,-1,0,1,0,
-        -1,1,0,0,1,
-        1,-1,0,1,0,
-        -1,-1,0,0,0,
-        -1,1,0,0,1
+         1,  1,  0,  1,  1,
+         1, -1,  0,  1,  0,
+        -1,  1,  0,  0,  1,
+         1, -1,  0,  1,  0,
+        -1, -1,  0,  0,  0,
+        -1,  1,  0,  0,  1
     };
     GLuint VAO, VBO;
     glGenVertexArrays(1, &VAO);
@@ -205,12 +227,12 @@ int main()
 
     float mesh[] =
     {
-        1,1,0,0,
-        1,0,0,0,
-        0,1,0,0,
-        1,0,0,0,
-        0,0,0,0,
-        0,1,0,0,
+        1, 1, 0, 0,
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        1, 0, 0, 0,
+        0, 0, 0, 0,
+        0, 1, 0, 0
     };
     GLuint meshBlock;
     glGenBuffers(1, &meshBlock);
@@ -221,50 +243,50 @@ int main()
 
     vector<string> faces
     {
-            "skybox/r.png",
-            "skybox/l.png",
-            "skybox/u.png",
-            "skybox/d.png",
-            "skybox/f.png",
-            "skybox/b.png"
+        "skybox/r.png",
+        "skybox/l.png",
+        "skybox/u.png",
+        "skybox/d.png",
+        "skybox/f.png",
+        "skybox/b.png"
     };
-    unsigned int cubemapTexture = loadCubemap(faces);
+    unsigned int cubemapTex = loadCubemap(faces);
 
     //////////////////////
     float iter = 0.0f;
-    glm::mat4 rot_matrix = glm::mat4(1.0f);
+    glm::mat4 rot_mat = glm::mat4(1.0f);
     ////////////////////////
 
     float aperture[4] = {0.0f, 0.0f, 10.0f, 1.0f}, seed = 0.5f;
-    rot_matrix = glm::rotate(rot_matrix, glm::radians(5.0f), glm::vec3(0.0, 1.0, 0.0));
+    rot_mat = glm::rotate(rot_mat, glm::radians(5.0f), glm::vec3(0.0, 1.0, 0.0));
 
     /* Looping until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
-        glUseProgram(pathtProgram);
+        glUseProgram(mltProg);
 
-        int sizeLoc = glGetUniformLocation(pathtProgram, "size");
-        int seedLoc = glGetUniformLocation(pathtProgram, "seed");
+        int sizeLoc = glGetUniformLocation(mltProg, "size");
+        int seedLoc = glGetUniformLocation(mltProg, "seed");
         glUniform1f(seedLoc, seed);
         seed += 3.1415f;
-        int appertureLoc = glGetUniformLocation(pathtProgram, "aperture");
-        glUniform4fv(appertureLoc, 1, aperture);
+        int apertureLoc = glGetUniformLocation(mltProg, "aperture");
+        glUniform4fv(apertureLoc, 1, aperture);
 
-        int rotateLoc = glGetUniformLocation(pathtProgram, "rotate_matrix");
-        glUniformMatrix4fv(rotateLoc, 1, GL_FALSE, glm::value_ptr(rot_matrix));
-        int xOrgLoc = glGetUniformLocation(pathtProgram, "xOrg");
+        int rotLoc = glGetUniformLocation(mltProg, "rotMat");
+        glUniformMatrix4fv(rotLoc, 1, GL_FALSE, glm::value_ptr(rot_mat));
+        int xOrgLoc = glGetUniformLocation(mltProg, "xOrg");
         glUniform1i(xOrgLoc, 0);
-        int yOrgLoc = glGetUniformLocation(pathtProgram, "yOrg");
+        int yOrgLoc = glGetUniformLocation(mltProg, "yOrg");
         glUniform1i(yOrgLoc, 2);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTex);
         glDispatchCompute((GLuint)texWid, (GLuint)texHt, 1);
 
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-        glUseProgram(quadProgram);
+        glUseProgram(vnfProg);
         glBindVertexArray(VAO);
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, tex_out);
-        int iterLoc = glGetUniformLocation(quadProgram, "iter");
+        glBindTexture(GL_TEXTURE_2D, texOut);
+        int iterLoc = glGetUniformLocation(vnfProg, "iter");
         glUniform1f(iterLoc, iter);
         iter += 1.0f;
         glEnable(GL_BLEND);
@@ -284,9 +306,10 @@ int main()
         /* Polling for and processing events */
         glfwPollEvents();
 
-        cout<<"Rendered frame "<<iter<<endl;
-        cout.flush();
+        cout << "Rendered frame " << iter << "\n";
+        //cout.flush();
 
+        /* For comparing MLT to Path Tracing */
         break;
     }
 

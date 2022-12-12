@@ -146,6 +146,7 @@
     <None Include="shader.glsl" />
     <None Include="shader.vert" />
     <None Include="shader2.glsl" />
+    <None Include="shader3.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -43,5 +43,8 @@
     <None Include="shader2.glsl">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="shader3.glsl">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

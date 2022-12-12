@@ -2,18 +2,16 @@
 
 layout(local_size_x = 1, local_size_y = 1) in;
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
-uniform samplerCube skybox;
-uniform mat4 rotate_matrix;
 uniform int xOrg;
 uniform int yOrg;
 uniform float seed;
+uniform mat4 rotMat;
+uniform samplerCube skybox;
 layout(rgba32f, binding = 0) uniform image2D img_output;
-
 layout(std140, binding = 0) uniform MESH_IN
 {
 	vec3 verts[1000];
 } vertices;
-
 vec4 pix;
 
 struct Ray
@@ -783,13 +781,13 @@ struct PathNode
 	int nextM;
 };
 
-#define NUM_HITS 30
-#define SAMPLES 1
-#define MUTATIONS 40
+#define NUM_HITS 10
+#define SAMPLES 10
+#define MUTATIONS 5
 
 // 10, 100, 0 converges after 50 frames. Took 7 minutes
 
-PathNode nodePool[NUM_HITS*MUTATIONS + 1];
+PathNode nodePool[NUM_HITS*(MUTATIONS + SAMPLES) + 1];
 
 int size = 0;
 int newPathNode()
@@ -828,7 +826,7 @@ void main()
 		Ray ray;
 		ray.org = vec3(xOrg, yOrg, 10.0);
 		vec4 initial = vec4(normalize(vec3(x*maxx, y*maxy, 0.0) - ray.org).xyzz);
-		ray.dir = vec3((rotate_matrix * initial).xyz);
+		ray.dir = vec3((rotMat * initial).xyz);
 		ray.nrg = vec3(1.0f);
 
 		lenX = 0;
@@ -864,7 +862,15 @@ void main()
 
 	// currentX is now Last x
 
-	
+	result /= nSamples;
+
+	int n = startX;
+	while (n <= currentX)
+	{
+		nodePool[n].result /= nSamples;
+		n = nodePool[n].nextA;
+	}
+
 	vec3 mutateResult = vec3(0);
 
 	float luminanceX = luminance(nodePool[currentX].result);
@@ -952,6 +958,6 @@ void main()
 	if (mutations > 0)
 		pix = vec4(mutateResult/(mutations + 1), 1.0);	
 	else
-		pix = vec4(result/nSamples, 1.0);
+		pix = vec4(result, 1.0);
 	imageStore(img_output, pixCoords, pix);
 }
