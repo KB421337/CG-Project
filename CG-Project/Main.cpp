@@ -257,6 +257,22 @@ int main()
     glm::mat4 rot_mat = glm::mat4(1.0f);
     ////////////////////////
 
+#define NUM_HITS 10
+#define SAMPLES 28
+#define MUTATIONS 0
+
+    // change in the shader2 as well
+    // int bufferSize = (NUM_HITS * (MUTATIONS*5 + SAMPLES) + 1) * 200; // 200 approx size of PathNode
+    // GLuint* buffer = new GLuint[bufferSize / sizeof(GLuint)];
+
+    // GLuint ssboId;
+    // glUseProgram(mltProg);
+    // glGenBuffers(1, &ssboId);
+    // glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboId);
+    // glBufferData(GL_SHADER_STORAGE_BUFFER, bufferSize, buffer, GL_STATIC_DRAW);
+    // glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssboId);
+    // glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
     float aperture[4] = {0.0f, 0.0f, 10.0f, 1.0f}, seed = 0.5f;
     rot_mat = glm::rotate(rot_mat, glm::radians(5.0f), glm::vec3(0.0, 1.0, 0.0));
 
@@ -279,9 +295,13 @@ int main()
         int yOrgLoc = glGetUniformLocation(mltProg, "yOrg");
         glUniform1i(yOrgLoc, 2);
         glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTex);
+
         glDispatchCompute((GLuint)texWid, (GLuint)texHt, 1);
 
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
+        glFinish();
+
         glUseProgram(vnfProg);
         glBindVertexArray(VAO);
         glActiveTexture(GL_TEXTURE0);

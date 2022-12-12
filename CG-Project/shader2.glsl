@@ -33,14 +33,6 @@ struct RayHit
     vec3 specular;	
 };
 
-struct Path
-{
-	int pathLen;
-	Ray rays[10];
-	RayHit rayhits[10];
-	vec3 results[10];
-};
-
 RayHit CreateRayHit()
 {
     RayHit hit;
@@ -781,13 +773,14 @@ struct PathNode
 	int nextM;
 };
 
+// change in Main.cpp as well
 #define NUM_HITS 10
 #define SAMPLES 10
-#define MUTATIONS 5
+#define MUTATIONS 0
 
 // 10, 100, 0 converges after 50 frames. Took 7 minutes
 
-PathNode nodePool[NUM_HITS*(MUTATIONS + SAMPLES) + 1];
+//PathNode nodePool[NUM_HITS*(MUTATIONS + SAMPLES) + 1];
 
 int size = 0;
 int newPathNode()
@@ -797,6 +790,9 @@ int newPathNode()
 	return oldSize;
 }
 
+struct Path {
+	PathNode nodes[NUM_HITS];
+};
 
 /* Assuming tentative transition function is symmetric. */
 
@@ -817,9 +813,11 @@ void main()
 
 	int nSamples = SAMPLES;
 	int lenX;
-	int startX;
-	int currentX;
 	vec3 result = vec3(0.0, 0.0, 0.0);
+	bool flag = false;
+
+	Path px;
+	Path py;
 
 	for (int j = 0; j < nSamples; j++)
 	{
@@ -830,134 +828,84 @@ void main()
 		ray.nrg = vec3(1.0f);
 
 		lenX = 0;
-		startX = -1;
-		currentX = startX;
 
 		for (int i = 1; i <= numHits; i++)
 		{
 			RayHit hit = Trace(ray);
 			result += ray.nrg*Shade(ray,hit); 
-		
-			if (mutations > 0)
-			{
-				if (currentX == -1)
-				{
-					startX = currentX = newPathNode();
-				}
-				else
-				{
-					nodePool[currentX].nextA = newPathNode();
-					currentX = nodePool[currentX].nextA;
-				}
-				nodePool[currentX].hit = hit;
-				nodePool[currentX].ray = ray;
-				nodePool[currentX].result = result;
-				lenX++;
-			}
+
+			px.nodes[i-1].hit = hit;
+			px.nodes[i-1].ray = ray;
+			px.nodes[i-1].result = result;
+
+			lenX++;
 
 			if (ray.nrg.x == 0.0 && ray.nrg.y == 0.0 && ray.nrg.z == 0.0)
 				break;
 		}
 	}
 
-	// currentX is now Last x
-
 	result /= nSamples;
 
-	int n = startX;
-	while (n <= currentX)
-	{
-		nodePool[n].result /= nSamples;
-		n = nodePool[n].nextA;
-	}
+	vec3 colorX = result;
+	float luminanceX = luminance(colorX);
 
 	vec3 mutateResult = vec3(0);
-
-	float luminanceX = luminance(nodePool[currentX].result);
-	vec3 colorX = nodePool[currentX].result;
-
 	mutateResult += colorX;
 
-	int tmp;
-
-	for (int i = 0; i < mutations; i++) {
-		//Path y = path;
+	for(int j = 0; j < mutations; j++) {
+		py = px;
 
 		int lenY = lenX;
-		int currentY = startX;
-		
+
 		int ld = getLd(lenY);
-		if (ld != 0)
-		{
+		if(ld != 0) {
 			lenY -= ld;
 
-			for (int j = 0; j < lenY-1; j++)
-				currentY = nodePool[currentY].nextA;
-			
-			int divergeNodeId = currentY;
 			int redLen = lenY;
-			Ray ray = nodePool[currentY].ray;
-			vec3 result = nodePool[currentY].result;
-			
-			for (int i = redLen + 1; i <= numHits; i++)
-			{
+
+			Ray ray = py.nodes[lenY-1].ray;
+			vec3 result = py.nodes[lenY-1].result;
+
+			for(int i = redLen + 1; i <= numHits; i++) {
 				RayHit hit = Trace(ray);
 				result += ray.nrg * Shade(ray, hit);
 
-				int newNode = newPathNode();
-				nodePool[newNode].hit = hit;
-				nodePool[newNode].ray = ray;
-				nodePool[newNode].result = result;
+				py.nodes[i-1].ray = ray;
+				py.nodes[i-1].hit = hit;
+				py.nodes[i-1].result = result;
 
-				if (i == redLen + 1)
-				{
-					nodePool[currentY].nextM = newNode;
-				}
-				else
-				{
-					nodePool[currentY].nextA = newNode;
-				}
-				currentY = newNode;
 				lenY++;
 
 				if (ray.nrg.x == 0.0 && ray.nrg.y == 0.0 && ray.nrg.z == 0.0)
 					break;
 			}
-			
-			// currentY is lastY
-			
-			float luminanceY = luminance(nodePool[currentY].result);
-			vec3 colorY = nodePool[currentY].result;
+
+			float luminanceY = luminance(result);
+			vec3 colorY = result;
 
 			float axy = min(1, luminanceY / luminanceX);
 
 			mutateResult += axy * colorX + (1-axy) * colorY;
 
-			if (rand() < axy)
-			{
-				//path = y;
-
-				//swap nextM and nextA of divergeNodeId
-				tmp = nodePool[divergeNodeId].nextM;
-				nodePool[divergeNodeId].nextM = nodePool[divergeNodeId].nextA;
-				nodePool[divergeNodeId].nextA = tmp;
-
-				lenX = lenY;
-
+			if(rand() < axy) {
+				px = py;
 				colorX = colorY;
 				luminanceX = luminanceY;
+				lenX = lenY;
 			}
 		}
-
-		else
-		{
+		else {
 			mutateResult += colorX;
 		}
 	}
-	
-	if (mutations > 0)
-		pix = vec4(mutateResult/(mutations + 1), 1.0);	
-	else
+
+	if (mutations > 0) {
+		pix = vec4(mutateResult/(mutations + 1), 1.0);
+	}
+	else {
 		pix = vec4(result, 1.0);
+	}
+	
 	imageStore(img_output, pixCoords, pix);
 }
