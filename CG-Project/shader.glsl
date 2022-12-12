@@ -12,10 +12,7 @@ layout(std140, binding = 0) uniform MESH_IN
 	vec3 verts[1000];
 } vertices;
 
-uniform float size;
-
 vec4 pix;
-vec4 directional_light = vec4(normalize(vec3(-1.0, -1.0, 0.0)).xyz, 1.0f);
 
 struct Ray
 {
@@ -60,13 +57,13 @@ struct Sphere
 	vec3 emission;
 };
 
-float internal_seed = seed;
-/* Generating random float between [ 0.0, 1.0 ) */
+float internalSeed = seed;
+/* Generating random float between [ 0.0, 1.0 ) with almost uniform probability distribution */
 float rand()
 {
-    float result = fract(sin(internal_seed/100.0f * dot(pix.xy, vec2(12.9898f, 78.233f))) * 43758.5453f);
-	internal_seed += 1.0f;
-	return result;
+    float rslt = fract(sin(internalSeed/100.0f * dot(pix.xy, vec2(12.9898f, 78.233f))) * 43758.5453f);
+	internalSeed += 1.0f;
+	return rslt;
 }
 
 /* Utility function to dot two vectors and clamp them between 0 and 1 */
@@ -99,55 +96,53 @@ mat3 GetTangentSpace(vec3 norm)
 }
 
 /* Sampling the hemisphere around the given normal and biases it based on the given alpha */
-vec3 SampleHemisphere(vec3 norm, float alpha)
+vec3 SampleHemi(vec3 norm, float alpha)
 {
     float cosTheta = pow(rand(), 1.0f/(alpha + 1.0f));
     float sinTheta = sqrt(max(0.0f, 1.0f - cosTheta*cosTheta));
-    float phi = 2 * 3.141592f * rand();
+    float phi = 2 * 3.141593f * rand();
     vec3 tangentSpaceDir = vec3(cos(phi)*sinTheta, sin(phi)*sinTheta, cosTheta);
     return GetTangentSpace(norm)*tangentSpaceDir;
 }
 
 bool intersectTriangle_MT97(Ray ray, vec3 vert0, vec3 vert1, vec3 vert2, inout float t, inout float u, inout float v)
 {
-    vec3 edge1 = vert1 - vert0;
-    vec3 edge2 = vert2 - vert0;
+    vec3 edge1 = vert1 - vert0, edge2 = vert2 - vert0;
     vec3 pvec = cross(ray.dir, edge2);
     float det = dot(edge1, pvec);
     if (det < 0.001f)
         return false;
-    float inv_det = 1.0f/det;
+    float invDet = 1.0f/det;
     vec3 tvec = ray.org - vert0;
-    u = dot(tvec, pvec)*inv_det;
+    u = dot(tvec, pvec)*invDet;
     if (u < 0.0 || u > 1.0f)
         return false;
     vec3 qvec = cross(tvec, edge1);
-    v = dot(ray.dir, qvec)*inv_det;
+    v = dot(ray.dir, qvec)*invDet;
     if (v < 0.0 || (u + v) > 1.0f)
         return false;
-    t = dot(edge2, qvec)*inv_det;
+    t = dot(edge2, qvec)*invDet;
     return true;
 }
 
 void intersectRoom(Ray ray, inout RayHit bestHit)
 {
-	float halflength = 10000, nearest_dist = 10000000.0;
+	float halfLen = 10000, nearestDist = 10000000.0, denom;
 	bool testBack = true, testDown = true, testLeft = true;
-	vec3 nearest, norm;
+	vec3 nearest, norm, pPt, pNorm;
 
 	/* Front face */
-	vec3 p_point = vec3(0.0, 0.0, -halflength);
-	vec3 p_norm = vec3(0.0, 0.0, 1.0);
-	float denom = dot(p_norm, ray.dir);
+	pPt = vec3(0.0, 0.0, -halfLen), pNorm = vec3(0.0, 0.0, 1.0);
+	denom = dot(pNorm, ray.dir);
 	if (abs(denom) > 0.0001f) // epsilon val can be changed
 	{
-		float t = dot(p_point - ray.org, p_norm)/denom;
+		float t = dot(pPt - ray.org, pNorm)/denom;
 		if (t > 0.0001f) 
 		{
 			testDown = false;
 			nearest = ray.org + t*ray.dir;
-			nearest_dist = t;
-			norm = p_norm;
+			nearestDist = t;
+			norm = pNorm;
 		}
 	}
 	else testBack = false;
@@ -155,41 +150,39 @@ void intersectRoom(Ray ray, inout RayHit bestHit)
 	/* Back face */
 	if (testBack)
 	{
-		vec3 p_point = vec3(0.0, 0.0, halflength);
-		vec3 p_norm = vec3(0.0, 0.0, -1.0);
-		float denom = dot(p_norm, ray.dir);
+		pPt = vec3(0.0, 0.0, halfLen), pNorm = vec3(0.0, 0.0, -1.0);
+		denom = dot(pNorm, ray.dir);
 		if (abs(denom) > 0.0001f) // epsilon val can be changed
 		{
-			float t = dot(p_point - ray.org, p_norm)/denom;
+			float t = dot(pPt - ray.org, pNorm)/denom;
 			if (t > 0.0001f) 
 			{
 				float dist = t;
-				if (dist < nearest_dist)
+				if (dist < nearestDist)
 				{
 					nearest = ray.org + t*ray.dir;
-					nearest_dist = dist;
-					norm = p_norm;
+					nearestDist = dist;
+					norm = pNorm;
 				}
 			}
 		}
 	}
 
 	/* Up face */
-	p_point = vec3(0.0, halflength, 0.0);
-	p_norm = vec3(0.0, -1.0, 0.0);
-	denom = dot(p_norm, ray.dir);
+	pPt = vec3(0.0, halfLen, 0.0), pNorm = vec3(0.0, -1.0, 0.0);
+	denom = dot(pNorm, ray.dir);
 	if (abs(denom) > 0.0001f) // epsilon val can be changed
 	{
-		float t = dot(p_point - ray.org, p_norm)/denom;
+		float t = dot(pPt - ray.org, pNorm)/denom;
 		if (t > 0.0001f) 
 		{
 			testDown = false;
 			float dist = t;
-			if (dist < nearest_dist)
+			if (dist < nearestDist)
 			{
 				nearest = ray.org + t*ray.dir;
-				nearest_dist = dist;
-				norm = p_norm;
+				nearestDist = dist;
+				norm = pNorm;
 			}
 		}
 	}
@@ -198,41 +191,39 @@ void intersectRoom(Ray ray, inout RayHit bestHit)
 	/* Down face */
 	if (testDown)
 	{
-		vec3 p_point = vec3(0.0, -halflength, 0.0);
-		vec3 p_norm = vec3(0.0, 1.0, 0.0);
-		float denom = dot(p_norm, ray.dir);
+		pPt = vec3(0.0, -halfLen, 0.0), pNorm = vec3(0.0, 1.0, 0.0);
+		denom = dot(pNorm, ray.dir);
 		if (abs(denom) > 0.0001f) // epsilon val can be changed
 		{
-			float t = dot(p_point - ray.org, p_norm)/denom;
+			float t = dot(pPt - ray.org, pNorm)/denom;
 			if (t > 0.0001f) 
 			{
 				float dist = t;
-				if (dist < nearest_dist)
+				if (dist < nearestDist)
 				{
 					nearest = ray.org + t*ray.dir;
-					nearest_dist = dist;
-					norm = p_norm;
+					nearestDist = dist;
+					norm = pNorm;
 				}
 			}
 		}
 	}
 
 	/* Right face */
-	p_point = vec3(halflength, 0.0, 0.0);
-	p_norm = vec3(-1.0, 0.0, 0.0);
-	denom = dot(p_norm, ray.dir);
+	pPt = vec3(halfLen, 0.0, 0.0), pNorm = vec3(-1.0, 0.0, 0.0);
+	denom = dot(pNorm, ray.dir);
 	if (abs(denom) > 0.0001f) // epsilon val can be changed
 	{
-		float t = dot(p_point - ray.org, p_norm)/denom;
+		float t = dot(pPt - ray.org, pNorm)/denom;
 		if (t > 0.0001f) 
 		{
 			testLeft = false;
 			float dist = t;
-			if (dist < nearest_dist)
+			if (dist < nearestDist)
 			{
 				nearest = ray.org + t*ray.dir;
-				nearest_dist = dist;
-				norm = p_norm;
+				nearestDist = dist;
+				norm = pNorm;
 			}
 		}
 	}
@@ -241,57 +232,55 @@ void intersectRoom(Ray ray, inout RayHit bestHit)
 	/* Left face */
 	if (testLeft)
 	{
-		vec3 p_point = vec3(-halflength, 0.0, 0.0);
-		vec3 p_norm = vec3(1.0, 0.0, 0.0);
-		float denom = dot(p_norm, ray.dir);
+		pPt = vec3(-halfLen, 0.0, 0.0), pNorm = vec3(1.0, 0.0, 0.0);
+		denom = dot(pNorm, ray.dir);
 		if (abs(denom) > 0.0001f) // epsilon val can be changed
 		{
-			float t = dot(p_point - ray.org, p_norm)/denom;
+			float t = dot(pPt - ray.org, pNorm)/denom;
 			if (t > 0.0001f) 
 			{
 				float dist = t;
-				if (dist < nearest_dist)
+				if (dist < nearestDist)
 				{
 					nearest = ray.org + t*ray.dir;
-					nearest_dist = dist;
-					norm = p_norm;
+					nearestDist = dist;
+					norm = pNorm;
 				}
 			}
 		}
 	}
 
-	if (nearest_dist < bestHit.dist || bestHit.dist == -1)
+	if (nearestDist < bestHit.dist || bestHit.dist == -1)
 	{
-		bestHit.dist = nearest_dist;
+		bestHit.dist = nearestDist;
 		bestHit.smoothness = 0.0;
 		bestHit.skybox = true;		
 		bestHit.albedo = vec3(texture(skybox, normalize(nearest)).xyz);
 		bestHit.emission = vec3(0.25);
 		bestHit.norm = norm;
-		bestHit.pos = ray.org + nearest_dist*ray.dir;
+		bestHit.pos = ray.org + nearestDist*ray.dir;
 		bestHit.specular = vec3(0.0);		
 	}
 }
 
 /* Function returning the colour of the pixel in the background intersected by a ray */
-vec3 drawBackground(vec3 r_org, vec3 r_dir)
+vec3 drawBackground(vec3 rOrg, vec3 rDir)
 {
-	float halflength = 10000, nearest_dist = 10000000.0;
+	float halfLen = 10000, nearestDist = 10000000.0, denom;
 	bool testBack = true, testDown = true, testLeft = true;
-	vec3 nearest;
+	vec3 nearest, pPt, pNorm;
 
 	/* Front face */
-	vec3 p_point = vec3(0.0, 0.0, -halflength);
-	vec3 p_norm = vec3(0.0, 0.0, 1.0);
-	float denom = dot(p_norm, r_dir);
+	pPt = vec3(0.0, 0.0, -halfLen), pNorm = vec3(0.0, 0.0, 1.0);
+	denom = dot(pNorm, rDir);
 	if (abs(denom) > 0.0001f) // epsilon val can be changed
 	{
-		float t = dot(p_point - r_org, p_norm)/denom;
+		float t = dot(pPt - rOrg, pNorm)/denom;
 		if (t > 0.0001f) 
 		{
 			testBack = false;
-			nearest = r_org + t*r_dir;
-			nearest_dist = length(t*r_dir);
+			nearest = rOrg + t*rDir;
+			nearestDist = length(t*rDir);
 		}
 	}
 	else testBack = false;
@@ -299,39 +288,37 @@ vec3 drawBackground(vec3 r_org, vec3 r_dir)
 	/* Back face */
 	if (testBack)
 	{
-		vec3 p_point = vec3(0.0, 0.0, halflength);
-		vec3 p_norm = vec3(0.0, 0.0, -1.0);
-		float denom = dot(p_norm, r_dir);
+		pPt = vec3(0.0, 0.0, halfLen), pNorm = vec3(0.0, 0.0, -1.0);
+		denom = dot(pNorm, rDir);
 		if (abs(denom) > 0.0001f) // epsilon val can be changed
 		{
-			float t = dot(p_point - r_org, p_norm)/denom;
+			float t = dot(pPt - rOrg, pNorm)/denom;
 			if (t > 0.0001f) 
 			{
-				float dist = length(t*r_dir);
-				if (dist < nearest_dist)
+				float dist = length(t*rDir);
+				if (dist < nearestDist)
 				{
-					nearest = r_org + t*r_dir;
-					nearest_dist = dist;
+					nearest = rOrg + t*rDir;
+					nearestDist = dist;
 				}
 			}
 		}
 	}
 
 	/* Up face */
-	p_point = vec3(0.0, halflength, 0.0);
-	p_norm = vec3(0.0, -1.0, 0.0);
-	denom = dot(p_norm, r_dir);
+	pPt = vec3(0.0, halfLen, 0.0), pNorm = vec3(0.0, -1.0, 0.0);
+	denom = dot(pNorm, rDir);
 	if (abs(denom) > 0.0001f) // epsilon val can be changed
 	{
-		float t = dot(p_point - r_org, p_norm)/denom;
+		float t = dot(pPt - rOrg, pNorm)/denom;
 		if (t > 0.0001f) 
 		{
 			testDown = false;
-			float dist = length(t*r_dir);
-			if (dist < nearest_dist)
+			float dist = length(t*rDir);
+			if (dist < nearestDist)
 			{
-				nearest = r_org + t*r_dir;
-				nearest_dist = dist;
+				nearest = rOrg + t*rDir;
+				nearestDist = dist;
 			}
 		}
 	}
@@ -340,39 +327,37 @@ vec3 drawBackground(vec3 r_org, vec3 r_dir)
 	/* Down face */
 	if (testDown)
 	{
-		vec3 p_point = vec3(0.0, -halflength, 0.0);
-		vec3 p_norm = vec3(0.0, 1.0, 0.0);
-		float denom = dot(p_norm, r_dir);
+		pPt = vec3(0.0, -halfLen, 0.0), pNorm = vec3(0.0, 1.0, 0.0);
+		denom = dot(pNorm, rDir);
 		if (abs(denom) > 0.0001f) // epsilon val can be changed
 		{
-			float t = dot(p_point - r_org, p_norm)/denom;
+			float t = dot(pPt - rOrg, pNorm)/denom;
 			if (t > 0.0001f) 
 			{
-				float dist = length(t*r_dir);
-				if (dist < nearest_dist)
+				float dist = length(t*rDir);
+				if (dist < nearestDist)
 				{
-					nearest = r_org + t*r_dir;
-					nearest_dist = dist;
+					nearest = rOrg + t*rDir;
+					nearestDist = dist;
 				}
 			}
 		}
 	}
 
 	/* Right face */
-	p_point = vec3(halflength, 0.0, 0.0);
-	p_norm = vec3(-1.0, 0.0, 0.0);
-	denom = dot(p_norm, r_dir);
+	pPt = vec3(halfLen, 0.0, 0.0), pNorm = vec3(-1.0, 0.0, 0.0);
+	denom = dot(pNorm, rDir);
 	if (abs(denom) > 0.0001f) // epsilon val can be changed
 	{
-		float t = dot(p_point - r_org, p_norm)/denom;
+		float t = dot(pPt - rOrg, pNorm)/denom;
 		if (t > 0.0001f) 
 		{
 			testLeft = false;
-			float dist = length(t*r_dir);
-			if (dist < nearest_dist)
+			float dist = length(t*rDir);
+			if (dist < nearestDist)
 			{
-				nearest = r_org + t*r_dir;
-				nearest_dist = dist;
+				nearest = rOrg + t*rDir;
+				nearestDist = dist;
 			}
 		}
 	}
@@ -381,19 +366,18 @@ vec3 drawBackground(vec3 r_org, vec3 r_dir)
 	/* Left face */
 	if (testLeft)
 	{
-		vec3 p_point = vec3(-halflength, 0.0, 0.0);
-		vec3 p_norm = vec3(1.0, 0.0, 0.0);
-		float denom = dot(p_norm, r_dir);
+		pPt = vec3(-halfLen, 0.0, 0.0), pNorm = vec3(1.0, 0.0, 0.0);
+		denom = dot(pNorm, rDir);
 		if (abs(denom) > 0.0001f) // epsilon val can be changed
 		{
-			float t = dot(p_point - r_org, p_norm)/denom;
+			float t = dot(pPt - rOrg, pNorm)/denom;
 			if (t > 0.0001f) 
 			{
-				float dist = length(t*r_dir);
-				if (dist < nearest_dist)
+				float dist = length(t*rDir);
+				if (dist < nearestDist)
 				{
-					nearest = r_org + t*r_dir;
-					nearest_dist = dist;
+					nearest = rOrg + t*rDir;
+					nearestDist = dist;
 				}
 			}
 		}
@@ -405,7 +389,7 @@ vec3 drawBackground(vec3 r_org, vec3 r_dir)
 /* Testing the intersection of a ray and the ground plane and modifying the previous best hit if the ground is visible to that ray */
 void intersectGroundPlane(Ray ray, inout RayHit bestHit)
 {
-	float t = (- ray.org.y - 17.0f )/ray.dir.y;
+	float t = (- ray.org.y - 17.0f)/ray.dir.y;
 	if (t > 0.1f && (t < bestHit.dist || bestHit.dist == -1))
 	{
 		bestHit.dist = t;
@@ -454,9 +438,7 @@ RayHit Trace(Ray ray)
 	intersectSphere(ray, bestHit, Sphere(vec3(1.0f, -14.6, -62.0f), 2.0, vec3(0.0, 0.0, 0.0), vec3(1.0, 1.0, 1.0), 0.0, vec3(0.0)));
 	intersectSphere(ray, bestHit, Sphere(vec3(8.0f, -11.0, -50.0f), 5.0, vec3(0.0, 0.0, 0.0), vec3(1.0, 1.0, 0.0), 0.8, vec3(1.0)));
 	
-	vec3 v0 = vec3(-10, -17, -55);
-	vec3 v1 = vec3(0, -17, -55);
-	vec3 v2 = vec3(-5, -6, -55);
+	vec3 v0 = vec3(-10, -17, -55), v1 = vec3(0, -17, -55), v2 = vec3(-5, -6, -55);
 	float t, u, v;
 	if (intersectTriangle_MT97(ray, v0, v1, v2, t, u, v))
 	{
@@ -486,18 +468,16 @@ vec3 Shade(inout Ray ray, RayHit hit)
 			return hit.emission;
 		}
 		hit.albedo = min(1.0f - hit.specular, hit.albedo);
-		float specProb = nrg(hit.specular);
-		float diffProb = nrg(hit.albedo);
+		float specProb = nrg(hit.specular), diffProb = nrg(hit.albedo), roulette = rand();
 		float sum = specProb + diffProb;
 		specProb /= sum;
 		diffProb /= sum;
-		float roulette = rand();
 		if (roulette < specProb)
 		{
 			/* Diffuse reflection */
 			ray.org = hit.pos + hit.norm*0.001f;
 			float alpha = SmoothnessToPhongAlpha(hit.smoothness);
-			ray.dir = SampleHemisphere(reflect(ray.dir, hit.norm), alpha);
+			ray.dir = SampleHemi(reflect(ray.dir, hit.norm), alpha);
 			float f = (alpha + 2)/(alpha + 1);
 			ray.nrg *= (1.0f/specProb) * hit.specular * sdot(hit.norm, ray.dir, f);
 		}
@@ -505,7 +485,7 @@ vec3 Shade(inout Ray ray, RayHit hit)
 		{
 			/* Specular reflection */
 			ray.org = hit.pos + hit.norm*0.001f;
-			ray.dir = SampleHemisphere(hit.norm, 1.0f);
+			ray.dir = SampleHemi(hit.norm, 1.0f);
 			ray.nrg *= (1.0f/diffProb) * hit.albedo;
 		}
 		return hit.emission; 
@@ -521,22 +501,22 @@ vec3 Shade(inout Ray ray, RayHit hit)
 void main()
 {
 	int numHits = 5;
-	ivec2 pix_coords = ivec2(gl_GlobalInvocationID.xy), dims = imageSize(img_output);
-	float max_x = 5.0, max_y = 5.0, x = float(pix_coords.x*2 - dims.x)/dims.x, y = float(pix_coords.y*2 - dims.y)/dims.y;
-	pix = vec4(pix_coords.x, pix_coords.y, 0.0, 1.0);
+	ivec2 pixCoords = ivec2(gl_GlobalInvocationID.xy), dims = imageSize(img_output);
+	float maxx = 5.0, maxy = 5.0, x = float(pixCoords.x*2 - dims.x)/dims.x, y = float(pixCoords.y*2 - dims.y)/dims.y;
+	pix = vec4(pixCoords.x, pixCoords.y, 0.0, 1.0);
 	Ray ray;
 	ray.org = vec3(0.0, 0.0, 10.0);
-	vec4 initial = vec4(normalize(vec3(x*max_x, y*max_y, 0.0) - ray.org).xyzz);
+	vec4 initial = vec4(normalize(vec3(x*maxx, y*maxy, 0.0) - ray.org).xyzz);
 	ray.dir = vec3((rotate_matrix * initial).xyz);
 	ray.nrg = vec3(1.0f);
-	vec3 result = vec3(0.0, 0.0, 0.0);
+	vec3 rslt = vec3(0.0, 0.0, 0.0);
 	for (int i = 1; i <= numHits; i++)
 	{
         RayHit hit = Trace(ray);
-        result += ray.nrg*Shade(ray,hit);    
+        rslt += ray.nrg*Shade(ray,hit);    
         if (ray.nrg.x == 0.0 && ray.nrg.y == 0.0 && ray.nrg.y == 0.0)
 			break;
     }
-	pix = vec4(result, 1.0);	
-	imageStore(img_output, pix_coords, pix);
+	pix = vec4(rslt, 1.0);	
+	imageStore(img_output, pixCoords, pix);
 }

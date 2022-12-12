@@ -7,5 +7,5 @@ uniform float iter;
 
 void main()
 {
-	FragColor = vec4(texture(ourTexture,TexCoord).rgb, 1.0f / (iter + 1.0f));
+	FragColor = vec4(texture(ourTexture, TexCoord).rgb, 1.0f/(iter + 1.0f));
 }
