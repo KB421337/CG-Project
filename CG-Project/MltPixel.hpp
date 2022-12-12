@@ -6,7 +6,11 @@
 #define SAMPLES 1
 #define MUTATIONS 0
 
-using namespace glm;
+#define ivec2 glm::ivec2
+#define vec2 glm::vec2
+#define vec3 glm::vec3
+#define vec4 glm::vec4
+#define mat3 glm::mat3
 
 struct Ray
 {

@@ -1,148 +1,8 @@
 #include "MltPixel.hpp"
-#include <iostream>
-using namespace std;
 
-#define MIN(x, y) ((x) < (y) ? (x) : (y))
-#define MAX(x, y) ((x) > (y) ? (x) : (y))
+#include<algorithm>
 
 vec4 pix;
-float xOrg = 0, yOrg = 0;
-
-int mutations = MUTATIONS;
-int numHits = NUM_HITS;
-
-float internalSeed = 0;
-/* Generating random float between [ 0.0, 1.0 ) with almost uniform probability distribution */
-float randFloat()
-{
-	float rslt = fract(sin(internalSeed / 100.0f * dot(vec2(pix), vec2(12.9898f, 78.233f))) * 43758.5453f);
-	internalSeed += 1.0f;
-	return rslt;
-}
-
-
-int getLd(int xl)
-{
-	if (xl < 3)
-		return 0;
-	float d = randFloat();
-	if (d <= 0.25)
-		return 1;
-	if (d <= 0.75)
-		return 2;
-	return int(floor(3 - log2(1 - 4 * (d - 0.75))));
-}
-
-float luminance(vec3 color)
-{
-	return 0.299 * color.x + 0.587 * color.y + 0.114 * color.z;
-}
-
-void drawPixel(int x, int y, int imgWidth, int imgHeight, vec4 *frameBuffer) {
-	ivec2 pixCoords = ivec2(x, y), dims = ivec2(imgWidth, imgHeight);
-	float xD = float(pixCoords.x * 2 - dims.x) / dims.x, yD = float(pixCoords.y * 2 - dims.y) / dims.y;
-	float maxx = 5.0, maxy = 5.0;
-	pix = vec4(pixCoords.x, pixCoords.y, 0.0, 1.0);
-
-	int nSamples = SAMPLES;
-	int lenX;
-	vec3 result = vec3(0.0, 0.0, 0.0);
-	bool flag = false;
-
-	Path px;
-	Path py;
-
-	for (int j = 0; j < nSamples; j++)
-	{
-		Ray ray;
-		ray.org = vec3(xOrg, yOrg, 10.0);
-		vec4 initial = vec4(normalize(vec3(xD * maxx, yD * maxy, 0.0) - ray.org), 1);
-		ray.dir = vec3(initial);
-		ray.nrg = vec3(1.0f);
-
-		lenX = 0;
-
-		for (int i = 1; i <= numHits; i++)
-		{
-			RayHit hit = Trace(ray);
-			vec3 s = Shade(ray, hit);
-			result += dot(ray.nrg, s);
-
-			px.nodes[i - 1].hit = hit;
-			px.nodes[i - 1].ray = ray;
-			px.nodes[i - 1].result = result;
-
-			lenX++;
-
-			if (ray.nrg.x == 0.0 && ray.nrg.y == 0.0 && ray.nrg.z == 0.0)
-				break;
-		}
-	}
-
-	result /= nSamples;
-
-	vec3 colorX = result;
-	float luminanceX = luminance(colorX);
-
-	vec3 mutateResult = vec3(0);
-	mutateResult += colorX;
-
-	for (int j = 0; j < mutations; j++) {
-		py = px;
-
-		int lenY = lenX;
-
-		int ld = getLd(lenY);
-		if (ld != 0) {
-			lenY -= ld;
-
-			int redLen = lenY;
-
-			Ray ray = py.nodes[lenY - 1].ray;
-			vec3 result = py.nodes[lenY - 1].result;
-
-			for (int i = redLen + 1; i <= numHits; i++) {
-				RayHit hit = Trace(ray);
-				result += dot(ray.nrg, Shade(ray, hit));
-
-				py.nodes[i - 1].ray = ray;
-				py.nodes[i - 1].hit = hit;
-				py.nodes[i - 1].result = result;
-
-				lenY++;
-
-				if (ray.nrg.x == 0.0 && ray.nrg.y == 0.0 && ray.nrg.z == 0.0)
-					break;
-			}
-
-			float luminanceY = luminance(result);
-			vec3 colorY = result;
-
-			float axy = MIN(1.f, luminanceY / luminanceX);
-
-			mutateResult += axy * colorX + (1 - axy) * colorY;
-
-			if (randFloat() < axy) {
-				px = py;
-				colorX = colorY;
-				luminanceX = luminanceY;
-				lenX = lenY;
-			}
-		}
-		else {
-			mutateResult += colorX;
-		}
-	}
-
-	if (mutations > 0) {
-		pix = vec4(mutateResult / (mutations + 1.f), 1.0);
-	}
-	else {
-		pix = vec4(result, 1.0);
-	}
-
-	frameBuffer[y * imgWidth + x] = pix;
-}
 
 RayHit CreateRayHit()
 {
@@ -158,13 +18,80 @@ RayHit CreateRayHit()
 	return hit;
 }
 
+float internalSeed = 0;
+/* Generating random float between [ 0.0, 1.0 ) with almost uniform probability distribution */
+float randFloat()
+{
+	float rslt = glm::fract(sin(internalSeed / 100.0f * glm::dot(vec2(pix), vec2(12.9898f, 78.233f))) * 43758.5453f);
+	internalSeed += 1.0f;
+	return rslt;
+}
+
+/* Utility function to dot two vectors and clamp them between 0 and 1 */
+float sdot(vec3 x, vec3 y, float f)
+{
+	return glm::clamp(dot(x, y) * f, 0.0f, 1.0f);
+}
+
+/* Utility function to average the 3 colour channels */
+float nrg(vec3 colour)
+{
+	return dot(colour, vec3(1.0f / 3.0f));
+}
+
+/* Converting a smoothness value to alpha for the scattering distribution */
+float SmoothnessToPhongAlpha(float s)
+{
+	return pow(1000.0f, s * s);
+}
+
+/* Finding the tangent space given a normal */
+mat3 GetTangentSpace(vec3 norm)
+{
+	vec3 helper = vec3(1, 0, 0);
+	if (abs(norm.x) > 0.99f)
+		helper = vec3(0, 0, 1);
+	vec3 tangent = normalize(cross(norm, helper));
+	vec3 binorm = normalize(cross(norm, tangent));
+
+	return mat3(tangent, binorm, norm);
+}
+
+/* Sampling the hemisphere around the given normal and biases it based on the given alpha */
+vec3 SampleHemi(vec3 norm, float alpha)
+{
+	float cosTheta = pow(randFloat(), 1.0f / (alpha + 1.0f));
+	float sinTheta = sqrt(std::max(0.0f, 1.0f - cosTheta * cosTheta));
+	float phi = 2 * 3.141593f * randFloat();
+	vec3 tangentSpaceDir = vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta);
+	return GetTangentSpace(norm) * tangentSpaceDir;
+}
+
+bool intersectTriangle_MT97(Ray ray, vec3 vert0, vec3 vert1, vec3 vert2, float& t, float& u, float& v)
+{
+	vec3 edge1 = vert1 - vert0, edge2 = vert2 - vert0;
+	vec3 pvec = cross(ray.dir, edge2);
+	float det = dot(edge1, pvec);
+	if (det < 0.001f)
+		return false;
+	float invDet = 1.0f / det;
+	vec3 tvec = ray.org - vert0;
+	u = dot(tvec, pvec) * invDet;
+	if (u < 0.0 || u > 1.0f)
+		return false;
+	vec3 qvec = cross(tvec, edge1);
+	v = dot(ray.dir, qvec) * invDet;
+	if (v < 0.0 || (u + v) > 1.0f)
+		return false;
+	t = dot(edge2, qvec) * invDet;
+	return true;
+}
+
 void intersectRoom(Ray ray, RayHit& bestHit)
 {
 	float halfLen = 10000, nearestDist = 10000000.0, denom;
 	bool testBack = true, testDown = true, testLeft = true;
 	vec3 nearest, norm, pPt, pNorm;
-
-	norm = vec3(0);
 
 	/* Front face */
 	pPt = vec3(0.0, 0.0, -halfLen), pNorm = vec3(0.0, 0.0, 1.0);
@@ -290,12 +217,135 @@ void intersectRoom(Ray ray, RayHit& bestHit)
 		bestHit.dist = nearestDist;
 		bestHit.smoothness = 0.0;
 		bestHit.skybox = true;
-		bestHit.albedo = vec3(0, 1, 0);
+		bestHit.albedo = vec3(0);
 		bestHit.emission = vec3(0.25);
 		bestHit.norm = norm;
 		bestHit.pos = ray.org + nearestDist * ray.dir;
 		bestHit.specular = vec3(0.0);
 	}
+}
+
+/* Function returning the colour of the pixel in the background intersected by a ray */
+vec3 drawBackground(vec3 rOrg, vec3 rDir)
+{
+	float halfLen = 10000, nearestDist = 10000000.0, denom;
+	bool testBack = true, testDown = true, testLeft = true;
+	vec3 nearest, pPt, pNorm;
+
+	/* Front face */
+	pPt = vec3(0.0, 0.0, -halfLen), pNorm = vec3(0.0, 0.0, 1.0);
+	denom = dot(pNorm, rDir);
+	if (abs(denom) > 0.0001f) // epsilon val can be changed
+	{
+		float t = dot(pPt - rOrg, pNorm) / denom;
+		if (t > 0.0001f)
+		{
+			testBack = false;
+			nearest = rOrg + t * rDir;
+			nearestDist = length(t * rDir);
+		}
+	}
+	else testBack = false;
+
+	/* Back face */
+	if (testBack)
+	{
+		pPt = vec3(0.0, 0.0, halfLen), pNorm = vec3(0.0, 0.0, -1.0);
+		denom = dot(pNorm, rDir);
+		if (abs(denom) > 0.0001f) // epsilon val can be changed
+		{
+			float t = dot(pPt - rOrg, pNorm) / denom;
+			if (t > 0.0001f)
+			{
+				float dist = length(t * rDir);
+				if (dist < nearestDist)
+				{
+					nearest = rOrg + t * rDir;
+					nearestDist = dist;
+				}
+			}
+		}
+	}
+
+	/* Up face */
+	pPt = vec3(0.0, halfLen, 0.0), pNorm = vec3(0.0, -1.0, 0.0);
+	denom = dot(pNorm, rDir);
+	if (abs(denom) > 0.0001f) // epsilon val can be changed
+	{
+		float t = dot(pPt - rOrg, pNorm) / denom;
+		if (t > 0.0001f)
+		{
+			testDown = false;
+			float dist = length(t * rDir);
+			if (dist < nearestDist)
+			{
+				nearest = rOrg + t * rDir;
+				nearestDist = dist;
+			}
+		}
+	}
+	else testDown = false;
+
+	/* Down face */
+	if (testDown)
+	{
+		pPt = vec3(0.0, -halfLen, 0.0), pNorm = vec3(0.0, 1.0, 0.0);
+		denom = dot(pNorm, rDir);
+		if (abs(denom) > 0.0001f) // epsilon val can be changed
+		{
+			float t = dot(pPt - rOrg, pNorm) / denom;
+			if (t > 0.0001f)
+			{
+				float dist = length(t * rDir);
+				if (dist < nearestDist)
+				{
+					nearest = rOrg + t * rDir;
+					nearestDist = dist;
+				}
+			}
+		}
+	}
+
+	/* Right face */
+	pPt = vec3(halfLen, 0.0, 0.0), pNorm = vec3(-1.0, 0.0, 0.0);
+	denom = dot(pNorm, rDir);
+	if (abs(denom) > 0.0001f) // epsilon val can be changed
+	{
+		float t = dot(pPt - rOrg, pNorm) / denom;
+		if (t > 0.0001f)
+		{
+			testLeft = false;
+			float dist = length(t * rDir);
+			if (dist < nearestDist)
+			{
+				nearest = rOrg + t * rDir;
+				nearestDist = dist;
+			}
+		}
+	}
+	else testLeft = false;
+
+	/* Left face */
+	if (testLeft)
+	{
+		pPt = vec3(-halfLen, 0.0, 0.0), pNorm = vec3(1.0, 0.0, 0.0);
+		denom = dot(pNorm, rDir);
+		if (abs(denom) > 0.0001f) // epsilon val can be changed
+		{
+			float t = dot(pPt - rOrg, pNorm) / denom;
+			if (t > 0.0001f)
+			{
+				float dist = length(t * rDir);
+				if (dist < nearestDist)
+				{
+					nearest = rOrg + t * rDir;
+					nearestDist = dist;
+				}
+			}
+		}
+	}
+
+	return vec3(0.1f);
 }
 
 /* Testing the intersection of a ray and the ground plane and modifying the previous best hit if the ground is visible to that ray */
@@ -307,7 +357,7 @@ void intersectGroundPlane(Ray ray, RayHit& bestHit)
 		bestHit.dist = t;
 		bestHit.pos = ray.org + t * ray.dir;
 		bestHit.norm = vec3(0.0, 1.0, 0.0);
-		bestHit.albedo = vec3(0.2);
+		bestHit.albedo = vec3(1.0);
 		bestHit.specular = vec3(1.0);
 		bestHit.emission = vec3(0.0, 0.0, 0.0);
 		bestHit.smoothness = 1;
@@ -316,7 +366,7 @@ void intersectGroundPlane(Ray ray, RayHit& bestHit)
 }
 
 /* Testing the intersection of a ray and a sphere and modifying the previous best hit if the ground is visible to that ray */
-void intersectSphere(Ray ray, RayHit &bestHit, Sphere sphere)
+void intersectSphere(Ray ray, RayHit& bestHit, Sphere sphere)
 {
 	vec3 d = ray.org - sphere.pos;
 	float p1 = -dot(ray.dir, d), p2sqr = p1 * p1 - dot(d, d) + sphere.rad * sphere.rad;
@@ -337,27 +387,6 @@ void intersectSphere(Ray ray, RayHit &bestHit, Sphere sphere)
 	}
 }
 
-bool intersectTriangle_MT97(Ray ray, vec3 vert0, vec3 vert1, vec3 vert2, float& t, float& u, float& v)
-{
-	
-	vec3 edge1 = vert1 - vert0, edge2 = vert2 - vert0;
-	vec3 pvec = cross(ray.dir, edge2);
-	float det = dot(edge1, pvec);
-	if (det < 0.001f)
-		return false;
-	float invDet = 1.0f / det;
-	vec3 tvec = ray.org - vert0;
-	u = dot(tvec, pvec) * invDet;
-	if (u < 0.0 || u > 1.0f)
-		return false;
-	vec3 qvec = cross(tvec, edge1);
-	v = dot(ray.dir, qvec) * invDet;
-	if (v < 0.0 || (u + v) > 1.0f)
-		return false;
-	t = dot(edge2, qvec) * invDet;
-	return true;
-}
-
 /* Driver tracing function to loop through all the objects in the scene and test interection */
 RayHit Trace(Ray ray)
 {
@@ -365,7 +394,7 @@ RayHit Trace(Ray ray)
 	intersectRoom(ray, bestHit);
 	intersectGroundPlane(ray, bestHit);
 	//intersectSphere(ray, bestHit, Sphere(vec3(-17.0f, -9.0, -62.0f), 7.0, vec3(0.0), vec3(1.0, 0.78f, 0.34f), 1.0, vec3(1.0)));
-	intersectSphere(ray, bestHit, Sphere(vec3(-15.0f, -12.6, -30.0f), 4.0f, vec3(0.0), vec3(1.0, 1.0f, 1.0f), 1.2f, vec3(0.0)));
+	intersectSphere(ray, bestHit, Sphere(vec3(-15.0f, -12.6, -30.0f), 4.0, vec3(0.0), vec3(1.0, 1.0f, 1.0f), 1.2, vec3(0.0)));
 	intersectSphere(ray, bestHit, Sphere(vec3(17.0f, -7.0, -45.0f), 3.0, vec3(1.0, 1.0, 1.0), vec3(1.0), 0.8, vec3(0.0, 10.0, 10.0)));
 	intersectSphere(ray, bestHit, Sphere(vec3(-3.0f, -9.6, -75.0f), 7.0, vec3(0.0, 0.0, 0.0), vec3(1.0, 0.35, 0.45), 0.1, vec3(0.0)));
 	intersectSphere(ray, bestHit, Sphere(vec3(1.0f, -14.6, -62.0f), 2.0, vec3(0.0, 0.0, 0.0), vec3(1.0, 1.0, 1.0), 0.0, vec3(0.0)));
@@ -632,48 +661,8 @@ RayHit Trace(Ray ray)
 	return bestHit;
 }
 
-/* Utility function to dot two vectors and clamp them between 0 and 1 */
-float sdot(vec3 x, vec3 y, float f)
-{
-	return MAX(0, MIN(dot(x, y) * f, 1.0f));
-}
-
-/* Utility function to average the 3 colour channels */
-float nrg(vec3 colour)
-{
-	return dot(colour, vec3(1.0f / 3.0f));
-}
-
-/* Converting a smoothness value to alpha for the scattering distribution */
-float SmoothnessToPhongAlpha(float s)
-{
-	return pow(1000.0f, s * s);
-}
-
-/* Finding the tangent space given a normal */
-mat3 GetTangentSpace(vec3 norm)
-{
-	vec3 helper = vec3(1, 0, 0);
-	if (abs(norm.x) > 0.99f)
-		helper = vec3(0, 0, 1);
-	vec3 tangent = normalize(cross(norm, helper));
-	vec3 binorm = normalize(cross(norm, tangent));
-
-	return mat3(tangent, binorm, norm);
-}
-
-/* Sampling the hemisphere around the given normal and biases it based on the given alpha */
-vec3 SampleHemi(vec3 norm, float alpha)
-{
-	float cosTheta = pow(randFloat(), 1.0f / (alpha + 1.0f));
-	float sinTheta = sqrt(MAX(0.0f, 1.0f - cosTheta * cosTheta));
-	float phi = 2 * 3.141593f * randFloat();
-	vec3 tangentSpaceDir = vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta);
-	return GetTangentSpace(norm) * tangentSpaceDir;
-}
-
 /* Driver colouring function to colours pixels based on hit properties, and then modify the ray to denote the new reflection dir */
-vec3 Shade(Ray &ray, RayHit hit)
+vec3 Shade(Ray& ray, RayHit hit)
 {
 	if (hit.dist > 0.01f)
 	{
@@ -710,4 +699,158 @@ vec3 Shade(Ray &ray, RayHit hit)
 		ray.nrg = vec3(0.0f);
 		return vec3(0.0, 0.0, 0.0);
 	}
+}
+
+/*
+float pd(int xl,  int ld)
+{
+	if (ld >= 4 || ld <= 0)
+		return 0;
+
+	if (ld != 2)
+		return 0.25;
+
+	return 0.5;
+}*/
+
+int getLd(int xl)
+{
+	if (xl < 3)
+		return 0;
+	float d = randFloat();
+	if (d <= 0.25)
+		return 1;
+	if (d <= 0.75)
+		return 2;
+	return int(floor(3 - log2(1 - 4 * (d - 0.75))));
+}
+
+// 10, 100, 0 converges after 50 frames. Took 7 minutes
+
+//PathNode nodePool[NUM_HITS*(MUTATIONS + SAMPLES) + 1];
+
+int size = 0;
+int newPathNode()
+{
+	int oldSize = size;
+	size++;
+	return oldSize;
+}
+
+/* Assuming tentative transition function is symmetric. */
+
+int mutations = MUTATIONS;
+int numHits = NUM_HITS;
+
+float luminance(vec3 color)
+{
+	return 0.299 * color.x + 0.587 * color.y + 0.114 * color.z;
+}
+
+/* Function to loop through all pixels and fill them with a colour */
+void drawPixel(int x, int y, int imgWidth, int imgHeight, vec4* frameBuffer)
+{
+	ivec2 pixCoords = ivec2(x, y), dims = ivec2(imgWidth, imgHeight);
+	float maxx = 5.0, maxy = 5.0, xD = float(pixCoords.x * 2 - dims.x) / dims.x, yD = float(pixCoords.y * 2 - dims.y) / dims.y;
+	pix = vec4(pixCoords.x, pixCoords.y, 0.0, 1.0);
+
+	int nSamples = SAMPLES;
+	int lenX;
+	vec3 result = vec3(0.0, 0.0, 0.0);
+	bool flag = false;
+
+	float xOrg = 0, yOrg = 2;
+
+	Path px;
+	Path py;
+
+	for (int j = 0; j < nSamples; j++)
+	{
+		Ray ray;
+		ray.org = vec3(xOrg, yOrg, 10.0);
+		vec4 initial = vec4(normalize(vec3(xD * maxx, yD * maxy, 0.0) - ray.org), 1.0f);
+		ray.dir = vec3((initial));
+		ray.nrg = vec3(1.0f);
+
+		lenX = 0;
+
+		for (int i = 1; i <= numHits; i++)
+		{
+			RayHit hit = Trace(ray);
+			result += ray.nrg * Shade(ray, hit);
+
+			px.nodes[i - 1].hit = hit;
+			px.nodes[i - 1].ray = ray;
+			px.nodes[i - 1].result = result;
+
+			lenX++;
+
+			if (ray.nrg.x == 0.0 && ray.nrg.y == 0.0 && ray.nrg.z == 0.0)
+				break;
+		}
+	}
+
+	result /= nSamples;
+
+	vec3 colorX = result;
+	float luminanceX = luminance(colorX);
+
+	vec3 mutateResult = vec3(0);
+	mutateResult += colorX;
+
+	for (int j = 0; j < mutations; j++) {
+		py = px;
+
+		int lenY = lenX;
+
+		int ld = getLd(lenY);
+		if (ld != 0) {
+			lenY -= ld;
+
+			int redLen = lenY;
+
+			Ray ray = py.nodes[lenY - 1].ray;
+			vec3 result = py.nodes[lenY - 1].result;
+
+			for (int i = redLen + 1; i <= numHits; i++) {
+				RayHit hit = Trace(ray);
+				result += ray.nrg * Shade(ray, hit);
+
+				py.nodes[i - 1].ray = ray;
+				py.nodes[i - 1].hit = hit;
+				py.nodes[i - 1].result = result;
+
+				lenY++;
+
+				if (ray.nrg.x == 0.0 && ray.nrg.y == 0.0 && ray.nrg.z == 0.0)
+					break;
+			}
+
+			float luminanceY = luminance(result);
+			vec3 colorY = result;
+
+			float axy = std::min(1.0f, luminanceY / luminanceX);
+
+			mutateResult += axy * colorX + (1 - axy) * colorY;
+
+			if (randFloat() < axy) {
+				px = py;
+				colorX = colorY;
+				luminanceX = luminanceY;
+				lenX = lenY;
+			}
+		}
+		else {
+			mutateResult += colorX;
+		}
+	}
+
+	if (mutations > 0) {
+		pix = vec4(mutateResult / (mutations + 1.0f), 1.0);
+	}
+	else {
+		pix = vec4(result, 1.0);
+	}
+
+	frameBuffer[y * imgWidth + x] = pix;
 }

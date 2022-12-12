@@ -264,10 +264,6 @@ int main()
     glm::mat4 rot_mat = glm::mat4(1.0f);
     ////////////////////////
 
-#define NUM_HITS 10
-#define SAMPLES 28
-#define MUTATIONS 0
-
     // change in the shader2 as well
     // int bufferSize = (NUM_HITS * (MUTATIONS*5 + SAMPLES) + 1) * 200; // 200 approx size of PathNode
     // GLuint* buffer = new GLuint[bufferSize / sizeof(GLuint)];
@@ -281,9 +277,9 @@ int main()
     // glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
     float aperture[4] = {0.0f, 0.0f, 10.0f, 1.0f}, seed = 0.5f;
-    rot_mat = glm::rotate(rot_mat, glm::radians(5.0f), glm::vec3(0.0, 1.0, 0.0));
+    rot_mat = rotate(rot_mat, glm::radians(5.0f), vec3(0.0, 1.0, 0.0));
 
-    glm::vec4* frameBuffer = new glm::vec4[texWid * texHt];
+    vec4* frameBuffer = new vec4[texWid * texHt];
 
     float color = 0;
     float dc = 0.01;
