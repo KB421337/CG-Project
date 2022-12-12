@@ -91,7 +91,7 @@ void intersectRoom(Ray ray, RayHit& bestHit)
 {
 	float halfLen = 10000, nearestDist = 10000000.0, denom;
 	bool testBack = true, testDown = true, testLeft = true;
-	vec3 nearest, norm, pPt, pNorm;
+	vec3 nearest, norm = vec3(0), pPt, pNorm;
 
 	/* Front face */
 	pPt = vec3(0.0, 0.0, -halfLen), pNorm = vec3(0.0, 0.0, 1.0);
@@ -739,8 +739,8 @@ int newPathNode()
 
 /* Assuming tentative transition function is symmetric. */
 
-int mutations = MUTATIONS;
-int numHits = NUM_HITS;
+const int mutations = MUTATIONS;
+const int numHits = NUM_HITS;
 
 float luminance(vec3 color)
 {
@@ -748,14 +748,14 @@ float luminance(vec3 color)
 }
 
 /* Function to loop through all pixels and fill them with a colour */
-void drawPixel(int x, int y, int imgWidth, int imgHeight, vec4* frameBuffer)
+void drawPixel(int x, int y, int imgWidth, int imgHeight, vec4* frameBuffer, std::atomic<int>& done)
 {
 	ivec2 pixCoords = ivec2(x, y), dims = ivec2(imgWidth, imgHeight);
 	float maxx = 5.0, maxy = 5.0, xD = float(pixCoords.x * 2 - dims.x) / dims.x, yD = float(pixCoords.y * 2 - dims.y) / dims.y;
 	pix = vec4(pixCoords.x, pixCoords.y, 0.0, 1.0);
 
 	int nSamples = SAMPLES;
-	int lenX;
+	int lenX = 0;
 	vec3 result = vec3(0.0, 0.0, 0.0);
 	bool flag = false;
 
@@ -763,7 +763,7 @@ void drawPixel(int x, int y, int imgWidth, int imgHeight, vec4* frameBuffer)
 
 	Path px;
 	Path py;
-
+	
 	for (int j = 0; j < nSamples; j++)
 	{
 		Ray ray;
@@ -799,20 +799,23 @@ void drawPixel(int x, int y, int imgWidth, int imgHeight, vec4* frameBuffer)
 	mutateResult += colorX;
 
 	for (int j = 0; j < mutations; j++) {
-		py = px;
 
 		int lenY = lenX;
 
 		int ld = getLd(lenY);
 		if (ld != 0) {
+			ld = ld < (lenX - 1) ? ld : (lenX - 1);
 			lenY -= ld;
+
+			for (int i = 0; i < lenY; i++) py.nodes[i] = px.nodes[i];
 
 			int redLen = lenY;
 
 			Ray ray = py.nodes[lenY - 1].ray;
 			vec3 result = py.nodes[lenY - 1].result;
-
-			for (int i = redLen + 1; i <= numHits; i++) {
+			
+			
+			for (int i = redLen + 1; i <= redLen+1; i++) {
 				RayHit hit = Trace(ray);
 				result += ray.nrg * Shade(ray, hit);
 
@@ -825,6 +828,7 @@ void drawPixel(int x, int y, int imgWidth, int imgHeight, vec4* frameBuffer)
 				if (ray.nrg.x == 0.0 && ray.nrg.y == 0.0 && ray.nrg.z == 0.0)
 					break;
 			}
+			
 
 			float luminanceY = luminance(result);
 			vec3 colorY = result;
@@ -839,6 +843,7 @@ void drawPixel(int x, int y, int imgWidth, int imgHeight, vec4* frameBuffer)
 				luminanceX = luminanceY;
 				lenX = lenY;
 			}
+			
 		}
 		else {
 			mutateResult += colorX;
@@ -853,4 +858,5 @@ void drawPixel(int x, int y, int imgWidth, int imgHeight, vec4* frameBuffer)
 	}
 
 	frameBuffer[y * imgWidth + x] = pix;
+	done++;
 }

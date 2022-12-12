@@ -1,10 +1,11 @@
 #pragma once
 
 #include "glm/glm.hpp"
+#include <atomic>
 
-#define NUM_HITS 5
+#define NUM_HITS 10
 #define SAMPLES 1
-#define MUTATIONS 0
+#define MUTATIONS 1000
 
 #define ivec2 glm::ivec2
 #define vec2 glm::vec2
@@ -59,4 +60,4 @@ struct Sphere
 
 RayHit Trace(Ray ray);
 vec3 Shade(Ray& ray, RayHit hit);
-void drawPixel(int x, int y, int imgWidth, int imgHeight, vec4* frameBuffer);
+void drawPixel(int x, int y, int imgWidth, int imgHeight, vec4* frameBuffer, std::atomic<int>& done);

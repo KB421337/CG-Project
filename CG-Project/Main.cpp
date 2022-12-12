@@ -86,6 +86,12 @@ unsigned int loadCubemap(vector<string> faces)
     return texId;
 }
 
+void runXLoop(int y, int imgWidth, int imgHeight, vec4* frameBuffer, std::atomic<int>& done) {
+    for (int x = 0; x < imgWidth; x++) {
+        drawPixel(x, y, imgWidth, imgHeight, frameBuffer, done);
+    }
+}
+
 int main()
 {
     GLFWwindow* window;
@@ -311,15 +317,16 @@ int main()
 
         glFinish();
 
+        std::atomic<int> done{0};
+
         for (int y = 0; y < texHt; y++) {
-            for (int x = 0; x < texWid; x++) {
-                //std::thread(drawPixel, x, y, texWid, texHt, frameBuffer).detach();
-                drawPixel(x, y, texWid, texHt, frameBuffer);
-            }
-            if (y == texHt / 5) cout << "20% done" << endl;
-            if (y == 2 * texHt / 5) cout << "40% done" << endl;
-            if (y == 3 * texHt / 5) cout << "60% done" << endl;
-            if (y == 4 * texHt / 5) cout << "80% done" << endl;
+            std::thread(runXLoop, y, texWid, texHt, frameBuffer, std::ref(done)).detach();
+
+            cout << y << " ";
+        }
+
+        while (done != texWid * texHt) {
+            cout << done << " ";
         }
 
         glUseProgram(vnfProg);
