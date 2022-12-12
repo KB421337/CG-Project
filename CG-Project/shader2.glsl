@@ -780,6 +780,8 @@ struct PathNode
 
 // 10, 100, 0 converges after 50 frames. Took 7 minutes
 
+layout(std140, 2) buffer TxData
+
 //PathNode nodePool[NUM_HITS*(MUTATIONS + SAMPLES) + 1];
 
 int size = 0;

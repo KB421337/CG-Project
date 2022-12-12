@@ -11,6 +11,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <thread>
 #include <windows.h>
 
 #include <glad/glad.h>
@@ -20,6 +21,8 @@
 #include "glm/gtx/string_cast.hpp"
 #include "glm/gtc/type_ptr.hpp"
 #include "stb_image.h"
+
+#include "MltPixel.hpp"
 
 #ifdef _MSC_VER
 #define ASSERT(x) if (!(x)) __debugbreak();
@@ -111,17 +114,19 @@ int main()
 		return -1;
 	}
 
-    int texWid = 900, texHt = 900;
+    const int texWid = 900, texHt = 900;
     GLuint texOut;
     glGenTextures(1, &texOut);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texOut);
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, texWid, texHt, 0, GL_RGBA, GL_FLOAT, NULL);
-    glBindImageTexture(0, texOut, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+    glBindImageTexture(GL_TEXTURE0, texOut, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
     glBindTexture(GL_TEXTURE_2D, 0);
 
@@ -162,6 +167,7 @@ int main()
         cout << infoLog << "\n";
     }
 
+    /*
     shaderSrc = shdrSrc("shader2.glsl");
     const char* computeSrc = shaderSrc.c_str();
     GLuint computeShader = glCreateShader(GL_COMPUTE_SHADER);
@@ -176,7 +182,7 @@ int main()
         char* msg = (char*)alloca(sizeof(char)*len);
         GlCall(glGetShaderInfoLog(computeShader, len, &len, msg));
         cout << msg << "\n";
-    }
+    }*/
 
     GLuint vnfProg = glCreateProgram();
     glAttachShader(vnfProg, vertShader);
@@ -190,7 +196,7 @@ int main()
         cout << infoLog << "\n";
     }
 
-    GLuint mltProg = glCreateProgram();
+    /*GLuint mltProg = glCreateProgram();
     glAttachShader(mltProg, computeShader);
     glLinkProgram(mltProg);
     glGetProgramiv(mltProg, GL_LINK_STATUS, &success);
@@ -200,10 +206,11 @@ int main()
         glGetProgramInfoLog(mltProg, 512, NULL, infoLog);
         cout << infoLog << "\n";
     }
+    */
 
     glDeleteShader(vertShader);
     glDeleteShader(fragShader);
-    glDeleteShader(computeShader);
+    //glDeleteShader(computeShader);
 
     float verts[] =
     {
@@ -276,18 +283,23 @@ int main()
     float aperture[4] = {0.0f, 0.0f, 10.0f, 1.0f}, seed = 0.5f;
     rot_mat = glm::rotate(rot_mat, glm::radians(5.0f), glm::vec3(0.0, 1.0, 0.0));
 
+    glm::vec4* frameBuffer = new glm::vec4[texWid * texHt];
+
+    float color = 0;
+    float dc = 0.01;
+
     /* Looping until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
-        glUseProgram(mltProg);
+        /*glUseProgram(mltProg);
 
         int sizeLoc = glGetUniformLocation(mltProg, "size");
         int seedLoc = glGetUniformLocation(mltProg, "seed");
         glUniform1f(seedLoc, seed);
-        seed += 3.1415f;
+        
         int apertureLoc = glGetUniformLocation(mltProg, "aperture");
         glUniform4fv(apertureLoc, 1, aperture);
-
+        seed += 3.1415f;
         int rotLoc = glGetUniformLocation(mltProg, "rotMat");
         glUniformMatrix4fv(rotLoc, 1, GL_FALSE, glm::value_ptr(rot_mat));
         int xOrgLoc = glGetUniformLocation(mltProg, "xOrg");
@@ -296,18 +308,33 @@ int main()
         glUniform1i(yOrgLoc, 2);
         glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTex);
 
-        glDispatchCompute((GLuint)texWid, (GLuint)texHt, 1);
+        //glDispatchCompute((GLuint)texWid, (GLuint)texHt, 1);
 
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+        */
 
         glFinish();
+
+        for (int y = 0; y < texHt; y++) {
+            for (int x = 0; x < texWid; x++) {
+                //std::thread(drawPixel, x, y, texWid, texHt, frameBuffer).detach();
+                drawPixel(x, y, texWid, texHt, frameBuffer);
+            }
+            if (y == texHt / 5) cout << "20% done" << endl;
+            if (y == 2 * texHt / 5) cout << "40% done" << endl;
+            if (y == 3 * texHt / 5) cout << "60% done" << endl;
+            if (y == 4 * texHt / 5) cout << "80% done" << endl;
+        }
 
         glUseProgram(vnfProg);
         glBindVertexArray(VAO);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texOut);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, texWid, texHt, 0, GL_RGBA, GL_FLOAT, frameBuffer);
+
         int iterLoc = glGetUniformLocation(vnfProg, "iter");
-        glUniform1f(iterLoc, iter);
+        //glUniform1f(iterLoc, iter);
         iter += 1.0f;
         glEnable(GL_BLEND);
         glBlendEquation(GL_FUNC_ADD);
@@ -330,7 +357,7 @@ int main()
         //cout.flush();
 
         /* For comparing MLT to Path Tracing */
-        break;
+        //break;
     }
 
     while (1);
