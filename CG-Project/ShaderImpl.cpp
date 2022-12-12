@@ -1,6 +1,7 @@
 #include "MltPixel.hpp"
 
 #include<algorithm>
+#include <random>
 
 vec4 pix;
 
@@ -19,12 +20,16 @@ RayHit CreateRayHit()
 }
 
 float internalSeed = 0;
+std::random_device rd;
+std::mt19937 e2(rd());
+std::uniform_real_distribution<float> dist(0, 1);
 /* Generating random float between [ 0.0, 1.0 ) with almost uniform probability distribution */
 float randFloat()
 {
-	float rslt = glm::fract(sin(internalSeed / 100.0f * glm::dot(vec2(pix), vec2(12.9898f, 78.233f))) * 43758.5453f);
-	internalSeed += 1.0f;
-	return rslt;
+//	float rslt = glm::fract(sin(internalSeed / 100.0 * glm::dot(vec2(pix), vec2(12.9898, 78.233))) * 43758.5453);
+//	internalSeed += 1.0;
+//	return rslt;
+	return dist(e2);
 }
 
 /* Utility function to dot two vectors and clamp them between 0 and 1 */
@@ -394,20 +399,20 @@ RayHit Trace(Ray ray)
 	intersectRoom(ray, bestHit);
 	intersectGroundPlane(ray, bestHit);
 	//intersectSphere(ray, bestHit, Sphere(vec3(-17.0f, -9.0, -62.0f), 7.0, vec3(0.0), vec3(1.0, 0.78f, 0.34f), 1.0, vec3(1.0)));
-	intersectSphere(ray, bestHit, Sphere(vec3(-15.0f, -12.6, -30.0f), 4.0, vec3(0.0), vec3(1.0, 1.0f, 1.0f), 1.2, vec3(0.0)));
-	intersectSphere(ray, bestHit, Sphere(vec3(17.0f, -7.0, -45.0f), 3.0, vec3(1.0, 1.0, 1.0), vec3(1.0), 0.8, vec3(0.0, 10.0, 10.0)));
-	intersectSphere(ray, bestHit, Sphere(vec3(-3.0f, -9.6, -75.0f), 7.0, vec3(0.0, 0.0, 0.0), vec3(1.0, 0.35, 0.45), 0.1, vec3(0.0)));
-	intersectSphere(ray, bestHit, Sphere(vec3(1.0f, -14.6, -62.0f), 2.0, vec3(0.0, 0.0, 0.0), vec3(1.0, 1.0, 1.0), 0.0, vec3(0.0)));
+	intersectSphere(ray, bestHit, Sphere(vec3(-15.0, -12.6, -30.0), 4.0, vec3(0.0), vec3(1.0, 1.0f, 1.0f), 1.2, vec3(0.0)));
+	intersectSphere(ray, bestHit, Sphere(vec3(17.0, -7.0, -45.0), 3.0, vec3(1.0, 1.0, 1.0), vec3(1.0), 0.8, vec3(0.0, 10.0, 10.0)));
+	intersectSphere(ray, bestHit, Sphere(vec3(-3.0, -9.6, -75.0), 7.0, vec3(0.0, 0.0, 0.0), vec3(1.0, 0.35, 0.45), 0.1, vec3(0.0)));
+	intersectSphere(ray, bestHit, Sphere(vec3(1.0, -14.6, -62.0), 2.0, vec3(0.0, 0.0, 0.0), vec3(1.0, 1.0, 1.0), 0.0, vec3(0.0)));
 	//intersectSphere(ray, bestHit, Sphere(vec3(8.0f, -11.0, -50.0f), 5.0, vec3(0.0, 0.0, 0.0), vec3(1.0, 1.0, 0.0), 0.8, vec3(1.0)));
 
-	vec3 wallEmission = vec3(0);
+	vec3 wallEmission = vec3(0.01);
 	vec3 wallSpecular = vec3(0);
 	vec3 wallAlbedo = vec3(1);
 	float wallSmoothness = 1;
 
-	vec3 v0 = vec3(-40, -17, -65);
-	vec3 v1 = vec3(15, -17, -65);
-	vec3 v2 = vec3(-40, 6, -65);
+	vec3 v0 = vec3(-40.0, -17.0, -65.0);
+	vec3 v1 = vec3(15.0, -17.0, -65.0);
+	vec3 v2 = vec3(-40.0, 6.0, -65.0);
 	float t, u, v;
 	if (intersectTriangle_MT97(ray, v0, v1, v2, t, u, v))
 	{
@@ -424,9 +429,9 @@ RayHit Trace(Ray ray)
 		}
 	}
 
-	v0 = vec3(-40, 6, -65);
-	v1 = vec3(15, -17, -65);
-	v2 = vec3(15, 6, -65);
+	v0 = vec3(-40.0, 6.0, -65.0);
+	v1 = vec3(15.0, -17.0, -65.0);
+	v2 = vec3(15.0, 6.0, -65.0);
 	if (intersectTriangle_MT97(ray, v0, v1, v2, t, u, v))
 	{
 		if (t > 0 && t < bestHit.dist)
@@ -442,9 +447,9 @@ RayHit Trace(Ray ray)
 		}
 	}
 
-	v0 = vec3(-30, 6, -65);
-	v1 = vec3(-25, 6, 35);
-	v2 = vec3(-25, -17, 35);
+	v0 = vec3(-30.0, 6.0, -65.0);
+	v1 = vec3(-25.0, 6.0, 35.0);
+	v2 = vec3(-25.0, -17.0, 35.0);
 	if (intersectTriangle_MT97(ray, v0, v1, v2, t, u, v))
 	{
 		if (t > 0 && t < bestHit.dist)
@@ -460,9 +465,9 @@ RayHit Trace(Ray ray)
 		}
 	}
 
-	v0 = vec3(-30, 6, -65);
-	v1 = vec3(-25, -17, 35);
-	v2 = vec3(-30, -17, -65);
+	v0 = vec3(-30, 6, -65.0);
+	v1 = vec3(-25, -17, 35.0);
+	v2 = vec3(-30, -17, -65.0);
 	if (intersectTriangle_MT97(ray, v0, v1, v2, t, u, v))
 	{
 		if (t > 0 && t < bestHit.dist)
@@ -478,9 +483,9 @@ RayHit Trace(Ray ray)
 		}
 	}
 
-	v0 = vec3(-25, 6, 15);
-	v1 = vec3(15, -17, 15);
-	v2 = vec3(-25, -17, 15);
+	v0 = vec3(-25.0, 6.0, 15.0);
+	v1 = vec3(15.0, -17.0, 15.0);
+	v2 = vec3(-25.0, -17.0, 15.0);
 	if (intersectTriangle_MT97(ray, v0, v1, v2, t, u, v))
 	{
 		if (t > 0 && t < bestHit.dist)
@@ -496,9 +501,9 @@ RayHit Trace(Ray ray)
 		}
 	}
 
-	v0 = vec3(-25, 6, 15);
-	v1 = vec3(15, 6, 15);
-	v2 = vec3(15, -17, 15);
+	v0 = vec3(-25.0, 6.0, 15.0);
+	v1 = vec3(15.0, 6.0, 15.0);
+	v2 = vec3(15.0, -17.0, 15.0);
 	if (intersectTriangle_MT97(ray, v0, v1, v2, t, u, v))
 	{
 		if (t > 0 && t < bestHit.dist)
@@ -514,9 +519,9 @@ RayHit Trace(Ray ray)
 		}
 	}
 
-	v0 = vec3(15, 6, 15);
-	v1 = vec3(15, 6, -35);
-	v2 = vec3(15, -17, -35);
+	v0 = vec3(15.0, 6.0, 15.0);
+	v1 = vec3(15.0, 6.0, -35.0);
+	v2 = vec3(15.0, -17.0, -35.0);
 	if (intersectTriangle_MT97(ray, v0, v1, v2, t, u, v))
 	{
 		if (t > 0 && t < bestHit.dist)
@@ -532,9 +537,9 @@ RayHit Trace(Ray ray)
 		}
 	}
 
-	v0 = vec3(15, 6, 15);
-	v1 = vec3(15, -17, -35);
-	v2 = vec3(15, -17, 15);
+	v0 = vec3(15.0, 6.0, 15.0);
+	v1 = vec3(15.0, -17.0, -35.0);
+	v2 = vec3(15.0, -17.0, 15.0);
 	if (intersectTriangle_MT97(ray, v0, v1, v2, t, u, v))
 	{
 		if (t > 0 && t < bestHit.dist)
@@ -550,9 +555,9 @@ RayHit Trace(Ray ray)
 		}
 	}
 
-	v0 = vec3(15, 6, -65);
-	v1 = vec3(10, -17, -30);
-	v2 = vec3(15, -17, -65);
+	v0 = vec3(15.0, 6.0, -65.0);
+	v1 = vec3(13.0, -17.0, -30.0);
+	v2 = vec3(15.0, -17.0, -65.0);
 	if (intersectTriangle_MT97(ray, v0, v1, v2, t, u, v))
 	{
 		if (t > 0 && t < bestHit.dist)
@@ -568,9 +573,9 @@ RayHit Trace(Ray ray)
 		}
 	}
 
-	v2 = vec3(15, 6, -65);
-	v1 = vec3(10, -17, -30);
-	v0 = vec3(15, -17, -65);
+	v2 = vec3(15.0, 6.0, -65.0);
+	v1 = vec3(13.0, -17.0, -30.0);
+	v0 = vec3(15.0, -17.0, -65.0);
 	if (intersectTriangle_MT97(ray, v0, v1, v2, t, u, v))
 	{
 		if (t > 0 && t < bestHit.dist)
@@ -586,9 +591,9 @@ RayHit Trace(Ray ray)
 		}
 	}
 
-	v2 = vec3(15, 6, -65);
-	v1 = vec3(10, 6, -30);
-	v0 = vec3(10, -17, -30);
+	v2 = vec3(15.0, 6.0, -65.0);
+	v1 = vec3(13.0, 6.0, -30.0);
+	v0 = vec3(13.0, -17.0, -30.0);
 	if (intersectTriangle_MT97(ray, v0, v1, v2, t, u, v))
 	{
 		if (t > 0 && t < bestHit.dist)
@@ -604,9 +609,9 @@ RayHit Trace(Ray ray)
 		}
 	}
 
-	v0 = vec3(15, 6, -65);
-	v1 = vec3(10, 6, -30);
-	v2 = vec3(10, -17, -30);
+	v0 = vec3(15.0, 6.0, -65.0);
+	v1 = vec3(13.0, 6.0, -30.0);
+	v2 = vec3(13.0, -17.0, -30.0);
 	if (intersectTriangle_MT97(ray, v0, v1, v2, t, u, v))
 	{
 		if (t > 0 && t < bestHit.dist)
@@ -622,9 +627,9 @@ RayHit Trace(Ray ray)
 		}
 	}
 
-	v0 = vec3(-40, 6, 20);
-	v1 = vec3(-40, 6, -65);
-	v2 = vec3(15, 6, -65);
+	v0 = vec3(-40.0, 6.0, 20.0);
+	v1 = vec3(-40.0, 6.0, -65.0);
+	v2 = vec3(15.0, 6.0, -65.0);
 	if (intersectTriangle_MT97(ray, v0, v1, v2, t, u, v))
 	{
 		if (t > 0 && t < bestHit.dist)
@@ -640,9 +645,9 @@ RayHit Trace(Ray ray)
 		}
 	}
 
-	v0 = vec3(15, 6, 15);
-	v1 = vec3(-40, 6, 15);
-	v2 = vec3(15, 6, -65);
+	v0 = vec3(15.0, 6.0, 15.0);
+	v1 = vec3(-40.0, 6.0, 15.0);
+	v2 = vec3(15.0, 6.0, -65.0);
 	if (intersectTriangle_MT97(ray, v0, v1, v2, t, u, v))
 	{
 		if (t > 0 && t < bestHit.dist)
@@ -750,6 +755,7 @@ float luminance(vec3 color)
 /* Function to loop through all pixels and fill them with a colour */
 void drawPixel(int x, int y, int imgWidth, int imgHeight, vec4* frameBuffer, std::atomic<int>& done)
 {
+	internalSeed = 0;
 	ivec2 pixCoords = ivec2(x, y), dims = ivec2(imgWidth, imgHeight);
 	float maxx = 5.0, maxy = 5.0, xD = float(pixCoords.x * 2 - dims.x) / dims.x, yD = float(pixCoords.y * 2 - dims.y) / dims.y;
 	pix = vec4(pixCoords.x, pixCoords.y, 0.0, 1.0);
@@ -759,7 +765,7 @@ void drawPixel(int x, int y, int imgWidth, int imgHeight, vec4* frameBuffer, std
 	vec3 result = vec3(0.0, 0.0, 0.0);
 	bool flag = false;
 
-	float xOrg = 0, yOrg = 2;
+	double xOrg = 1, yOrg = 2;
 
 	Path px;
 	Path py;
@@ -803,7 +809,7 @@ void drawPixel(int x, int y, int imgWidth, int imgHeight, vec4* frameBuffer, std
 		int lenY = lenX;
 
 		int ld = getLd(lenY);
-		if (ld != 0) {
+		if (ld > 0) {
 			ld = ld < (lenX - 1) ? ld : (lenX - 1);
 			lenY -= ld;
 
@@ -814,8 +820,7 @@ void drawPixel(int x, int y, int imgWidth, int imgHeight, vec4* frameBuffer, std
 			Ray ray = py.nodes[lenY - 1].ray;
 			vec3 result = py.nodes[lenY - 1].result;
 			
-			
-			for (int i = redLen + 1; i <= redLen+1; i++) {
+			for (int i = redLen + 1; i <= numHits; i++) {
 				RayHit hit = Trace(ray);
 				result += ray.nrg * Shade(ray, hit);
 

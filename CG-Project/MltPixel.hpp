@@ -5,13 +5,13 @@
 
 #define NUM_HITS 10
 #define SAMPLES 1
-#define MUTATIONS 1000
+#define MUTATIONS 80
 
 #define ivec2 glm::ivec2
-#define vec2 glm::vec2
-#define vec3 glm::vec3
-#define vec4 glm::vec4
-#define mat3 glm::mat3
+#define vec2 glm::highp_vec2
+#define vec3 glm::highp_vec3
+#define vec4 glm::highp_vec4
+#define mat3 glm::highp_mat3
 
 struct Ray
 {
