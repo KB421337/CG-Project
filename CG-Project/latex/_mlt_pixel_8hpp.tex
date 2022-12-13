@@ -1,0 +1,129 @@
+\hypertarget{_mlt_pixel_8hpp}{}\doxysection{Mlt\+Pixel.\+hpp File Reference}
+\label{_mlt_pixel_8hpp}\index{MltPixel.hpp@{MltPixel.hpp}}
+
+
+Contains the data structures and shader invocation functions.  
+
+
+{\ttfamily \#include $<$atomic$>$}\newline
+{\ttfamily \#include $<$list$>$}\newline
+{\ttfamily \#include $<$random$>$}\newline
+{\ttfamily \#include $<$set$>$}\newline
+{\ttfamily \#include \char`\"{}glm/glm.\+hpp\char`\"{}}\newline
+\doxysubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{struct_ray}{Ray}}
+\begin{DoxyCompactList}\small\item\em Struct for a single \mbox{\hyperlink{struct_ray}{Ray}}. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{struct_ray_hit}{Ray\+Hit}}
+\begin{DoxyCompactList}\small\item\em Struct for a single hit by a \mbox{\hyperlink{struct_ray}{Ray}} on any surface. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{struct_path_node}{Path\+Node}}
+\begin{DoxyCompactList}\small\item\em Struct containing a single node of a \mbox{\hyperlink{struct_path}{Path}}. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{struct_path}{Path}}
+\begin{DoxyCompactList}\small\item\em Struct containing a single \mbox{\hyperlink{struct_path}{Path}}. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{struct_sph}{Sph}}
+\begin{DoxyCompactList}\small\item\em Struct containing a single Sphere surface. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structmvec4}{mvec4}}
+\begin{DoxyCompactList}\small\item\em Custom vec4 for which we define \texorpdfstring{$<$}{<}operator to store vec4 in std\+::set. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{_mlt_pixel_8hpp_af4ff01d3789552424f14393566c595ed}\label{_mlt_pixel_8hpp_af4ff01d3789552424f14393566c595ed}} 
+\#define {\bfseries NUM\+\_\+\+HITS}~10
+\item 
+\mbox{\Hypertarget{_mlt_pixel_8hpp_ad0c329adebc27917fc0a4f51079acf6a}\label{_mlt_pixel_8hpp_ad0c329adebc27917fc0a4f51079acf6a}} 
+\#define {\bfseries SAMPLES}~1
+\item 
+\mbox{\Hypertarget{_mlt_pixel_8hpp_a420cb2d19d7aee45b275e242270ca56e}\label{_mlt_pixel_8hpp_a420cb2d19d7aee45b275e242270ca56e}} 
+\#define {\bfseries MUTATIONS}~100
+\item 
+\mbox{\Hypertarget{_mlt_pixel_8hpp_a15c4157797848087635cf36a10ea8c31}\label{_mlt_pixel_8hpp_a15c4157797848087635cf36a10ea8c31}} 
+\#define {\bfseries ivec2}~glm\+::ivec2
+\item 
+\mbox{\Hypertarget{_mlt_pixel_8hpp_acc55f4348f216778d9ae8a0705871cc1}\label{_mlt_pixel_8hpp_acc55f4348f216778d9ae8a0705871cc1}} 
+\#define {\bfseries vec2}~glm\+::highp\+\_\+f32vec2
+\item 
+\mbox{\Hypertarget{_mlt_pixel_8hpp_af6d272d078cf83bdcc1e6fd4ea439515}\label{_mlt_pixel_8hpp_af6d272d078cf83bdcc1e6fd4ea439515}} 
+\#define {\bfseries vec3}~glm\+::highp\+\_\+f32vec3
+\item 
+\mbox{\Hypertarget{_mlt_pixel_8hpp_a77965a05871a66cdc90da21e2f9e4885}\label{_mlt_pixel_8hpp_a77965a05871a66cdc90da21e2f9e4885}} 
+\#define {\bfseries vec4}~glm\+::highp\+\_\+f32vec4
+\item 
+\mbox{\Hypertarget{_mlt_pixel_8hpp_a4665d681bb97bdabf00aef0723d79f64}\label{_mlt_pixel_8hpp_a4665d681bb97bdabf00aef0723d79f64}} 
+\#define {\bfseries mat3}~glm\+::highp\+\_\+f32mat3
+\item 
+\mbox{\Hypertarget{_mlt_pixel_8hpp_a6df24f6ca9d64ecc53253c69a6e8051a}\label{_mlt_pixel_8hpp_a6df24f6ca9d64ecc53253c69a6e8051a}} 
+\#define {\bfseries mat4}~glm\+::highp\+\_\+f32mat4
+\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{struct_ray_hit}{Ray\+Hit}} \mbox{\hyperlink{_mlt_pixel_8hpp_a0996011bc8b752c27939c2069c518e87}{Trc}} (\mbox{\hyperlink{struct_ray}{Ray}} ray)
+\begin{DoxyCompactList}\small\item\em Shoots the ray and returns the ray hit point. \end{DoxyCompactList}\item 
+vec3 \mbox{\hyperlink{_mlt_pixel_8hpp_a83cebc909fcdda9bb717b12f4d176240}{Shd}} (\mbox{\hyperlink{struct_ray}{Ray}} \&ray, \mbox{\hyperlink{struct_ray_hit}{Ray\+Hit}} hit, std\+::mt19937 \&e2, std\+::uniform\+\_\+real\+\_\+distribution$<$ double $>$ \&dist)
+\begin{DoxyCompactList}\small\item\em Updates the ray based on the ray hit for the next raycast by random sampling the given distribution and returns the color for the given ray and ray hit. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{_mlt_pixel_8hpp_a2049595194e7b1af78df7904f04f3646}\label{_mlt_pixel_8hpp_a2049595194e7b1af78df7904f04f3646}} 
+void {\bfseries draw\+Pixel} (int x, int y, int img\+Wid, int img\+Ht, vec4 $\ast$frm\+Buff, std\+::atomic$<$ int $>$ \&done)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Contains the data structures and shader invocation functions. 
+
+\begin{DoxyAuthor}{Author}
+
+\end{DoxyAuthor}
+\begin{DoxyVersion}{Version}
+0.\+1 
+\end{DoxyVersion}
+\begin{DoxyDate}{Date}
+2022-\/12-\/14
+\end{DoxyDate}
+\begin{DoxyCopyright}{Copyright}
+Copyright (c) 2022 
+\end{DoxyCopyright}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{_mlt_pixel_8hpp_a83cebc909fcdda9bb717b12f4d176240}\label{_mlt_pixel_8hpp_a83cebc909fcdda9bb717b12f4d176240}} 
+\index{MltPixel.hpp@{MltPixel.hpp}!Shd@{Shd}}
+\index{Shd@{Shd}!MltPixel.hpp@{MltPixel.hpp}}
+\doxysubsubsection{\texorpdfstring{Shd()}{Shd()}}
+{\footnotesize\ttfamily vec3 Shd (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{struct_ray}{Ray}} \&}]{ray,  }\item[{\mbox{\hyperlink{struct_ray_hit}{Ray\+Hit}}}]{hit,  }\item[{std\+::mt19937 \&}]{e2,  }\item[{std\+::uniform\+\_\+real\+\_\+distribution$<$ double $>$ \&}]{dist }\end{DoxyParamCaption})}
+
+
+
+Updates the ray based on the ray hit for the next raycast by random sampling the given distribution and returns the color for the given ray and ray hit. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em ray} & \mbox{\hyperlink{struct_ray}{Ray}} to be updated \\
+\hline
+{\em hit} & \mbox{\hyperlink{struct_ray_hit}{Ray\+Hit}} to be used for updating the ray \\
+\hline
+{\em e2} & Random Generating Engine \\
+\hline
+{\em dist} & Random Distribution \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+vec3 Color result for the given ray and ray hit. 
+\end{DoxyReturn}
+\mbox{\Hypertarget{_mlt_pixel_8hpp_a0996011bc8b752c27939c2069c518e87}\label{_mlt_pixel_8hpp_a0996011bc8b752c27939c2069c518e87}} 
+\index{MltPixel.hpp@{MltPixel.hpp}!Trc@{Trc}}
+\index{Trc@{Trc}!MltPixel.hpp@{MltPixel.hpp}}
+\doxysubsubsection{\texorpdfstring{Trc()}{Trc()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{struct_ray_hit}{Ray\+Hit}} Trc (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{struct_ray}{Ray}}}]{ray }\end{DoxyParamCaption})}
+
+
+
+Shoots the ray and returns the ray hit point. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em ray} & \mbox{\hyperlink{struct_ray}{Ray}} to be shot \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+\mbox{\hyperlink{struct_ray_hit}{Ray\+Hit}} Point which the \mbox{\hyperlink{struct_ray}{Ray}} hits 
+\end{DoxyReturn}

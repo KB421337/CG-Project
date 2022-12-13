@@ -1,0 +1,81 @@
+\hypertarget{_mlt_pixel_8hpp_source}{}\doxysection{Mlt\+Pixel.\+hpp}
+\mbox{\hyperlink{_mlt_pixel_8hpp}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{1 \textcolor{preprocessor}{\#pragma once}}
+\DoxyCodeLine{2 }
+\DoxyCodeLine{14 \textcolor{preprocessor}{\#include <atomic>}}
+\DoxyCodeLine{15 \textcolor{preprocessor}{\#include <list>}}
+\DoxyCodeLine{16 \textcolor{preprocessor}{\#include <random>}}
+\DoxyCodeLine{17 \textcolor{preprocessor}{\#include <set>}}
+\DoxyCodeLine{18 }
+\DoxyCodeLine{19 \textcolor{preprocessor}{\#include "{}glm/glm.hpp"{}}}
+\DoxyCodeLine{20 }
+\DoxyCodeLine{21 \textcolor{preprocessor}{\#define NUM\_HITS 10}}
+\DoxyCodeLine{22 \textcolor{preprocessor}{\#define SAMPLES 1}}
+\DoxyCodeLine{23 \textcolor{preprocessor}{\#define MUTATIONS 100}}
+\DoxyCodeLine{24 }
+\DoxyCodeLine{25 \textcolor{preprocessor}{\#define ivec2 glm::ivec2}}
+\DoxyCodeLine{26 \textcolor{preprocessor}{\#define vec2 glm::highp\_f32vec2}}
+\DoxyCodeLine{27 \textcolor{preprocessor}{\#define vec3 glm::highp\_f32vec3}}
+\DoxyCodeLine{28 \textcolor{preprocessor}{\#define vec4 glm::highp\_f32vec4}}
+\DoxyCodeLine{29 \textcolor{preprocessor}{\#define mat3 glm::highp\_f32mat3}}
+\DoxyCodeLine{30 \textcolor{preprocessor}{\#define mat4 glm::highp\_f32mat4}}
+\DoxyCodeLine{31 }
+\DoxyCodeLine{36 \textcolor{keyword}{struct }\mbox{\hyperlink{struct_ray}{Ray}}}
+\DoxyCodeLine{37 \{}
+\DoxyCodeLine{38     vec3 dir;}
+\DoxyCodeLine{39     vec3 nrg;}
+\DoxyCodeLine{40     vec3 org;}
+\DoxyCodeLine{41 \};}
+\DoxyCodeLine{42 }
+\DoxyCodeLine{47 \textcolor{keyword}{struct }\mbox{\hyperlink{struct_ray_hit}{RayHit}}}
+\DoxyCodeLine{48 \{}
+\DoxyCodeLine{49     \textcolor{keywordtype}{double} dist;}
+\DoxyCodeLine{50     \textcolor{keywordtype}{double} smoothness;}
+\DoxyCodeLine{51     \textcolor{keywordtype}{bool} skybox;}
+\DoxyCodeLine{52     vec3 albedo;}
+\DoxyCodeLine{53     vec3 emission;}
+\DoxyCodeLine{54     vec3 norm;}
+\DoxyCodeLine{55     vec3 pos;}
+\DoxyCodeLine{56     vec3 specular;}
+\DoxyCodeLine{57 \};}
+\DoxyCodeLine{58 }
+\DoxyCodeLine{63 \textcolor{keyword}{struct }\mbox{\hyperlink{struct_path_node}{PathNode}}}
+\DoxyCodeLine{64 \{}
+\DoxyCodeLine{65     \mbox{\hyperlink{struct_ray_hit}{RayHit}} hit;}
+\DoxyCodeLine{66     \mbox{\hyperlink{struct_ray}{Ray}} ray;}
+\DoxyCodeLine{67     vec3 rslt;}
+\DoxyCodeLine{68     \textcolor{keywordtype}{int} nextA;}
+\DoxyCodeLine{69     \textcolor{keywordtype}{int} nextM;}
+\DoxyCodeLine{70 \};}
+\DoxyCodeLine{71 }
+\DoxyCodeLine{76 \textcolor{keyword}{struct }\mbox{\hyperlink{struct_path}{Path}} }
+\DoxyCodeLine{77 \{}
+\DoxyCodeLine{78     \mbox{\hyperlink{struct_path_node}{PathNode}} nodes[NUM\_HITS];}
+\DoxyCodeLine{79 \};}
+\DoxyCodeLine{80 }
+\DoxyCodeLine{85 \textcolor{keyword}{struct }\mbox{\hyperlink{struct_sph}{Sph}}}
+\DoxyCodeLine{86 \{}
+\DoxyCodeLine{87     vec3 pos;}
+\DoxyCodeLine{88     \textcolor{keywordtype}{double} rad;}
+\DoxyCodeLine{89     vec3 albedo;}
+\DoxyCodeLine{90     vec3 specular;}
+\DoxyCodeLine{91     \textcolor{keywordtype}{double} smoothness;}
+\DoxyCodeLine{92     vec3 emission;}
+\DoxyCodeLine{93     \mbox{\hyperlink{struct_sph}{Sph}}(vec3 pos, \textcolor{keywordtype}{float} rad, vec3 albedo, vec3 specular, \textcolor{keywordtype}{double} smoothness, vec3 emission) : pos(pos), rad(rad), albedo(albedo), specular(specular), smoothness(smoothness), emission(emission)}
+\DoxyCodeLine{94     \{\}}
+\DoxyCodeLine{95 \};}
+\DoxyCodeLine{96 }
+\DoxyCodeLine{101 \textcolor{keyword}{struct }\mbox{\hyperlink{structmvec4}{mvec4}} }
+\DoxyCodeLine{102 \{}
+\DoxyCodeLine{103     vec4 colour;}
+\DoxyCodeLine{104     \mbox{\hyperlink{structmvec4}{mvec4}}(vec4 color) : colour(colour)}
+\DoxyCodeLine{105     \{\}}
+\DoxyCodeLine{106 \};}
+\DoxyCodeLine{107 }
+\DoxyCodeLine{114 \mbox{\hyperlink{struct_ray_hit}{RayHit}} \mbox{\hyperlink{_mlt_pixel_8hpp_a0996011bc8b752c27939c2069c518e87}{Trc}}(\mbox{\hyperlink{struct_ray}{Ray}} ray);}
+\DoxyCodeLine{115 }
+\DoxyCodeLine{126 vec3 \mbox{\hyperlink{_mlt_pixel_8hpp_a83cebc909fcdda9bb717b12f4d176240}{Shd}}(\mbox{\hyperlink{struct_ray}{Ray}}\& ray, \mbox{\hyperlink{struct_ray_hit}{RayHit}} hit, std::mt19937\& e2, std::uniform\_real\_distribution<double>\& dist);}
+\DoxyCodeLine{127 \textcolor{keywordtype}{void} drawPixel(\textcolor{keywordtype}{int} x, \textcolor{keywordtype}{int} y, \textcolor{keywordtype}{int} imgWid, \textcolor{keywordtype}{int} imgHt, vec4* frmBuff, std::atomic<int>\& done);}
+
+\end{DoxyCode}

@@ -1,3 +1,14 @@
+/**
+ * @file ShaderImpl.cpp
+ * @author
+ * @brief Contains the C++ implementation of the Path Tracing MLT Shader
+ * @version 0.1
+ * @date 2022-12-14
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
+
 #include <algorithm>
 #include <iostream>
 
@@ -5,6 +16,11 @@
 
 using namespace std;
 
+/**
+ * @brief Initializes a RayHit object
+ * 
+ * @return RayHit object initialized
+ */
 RayHit CreateRayHit()
 {
 	RayHit hit;
@@ -19,31 +35,61 @@ RayHit CreateRayHit()
 	return hit;
 }
 
-/* Generating random float between [ 0.0, 1.0 ) */
+/**
+ * @brief Generates a random float from [0, 1] based on the
+ * uniform distribution
+ * 
+ * @param e2 Random number generator engine
+ * @param dist Uniform Distribution object
+ * @return float Random float between 0 and 1
+ */
 float randfloat(mt19937& e2, uniform_real_distribution<float>& dist)
 {
 	return dist(e2);
 }
 
-/* Utility function to dot two vectors and clamp them between 0 and 1 */
+/**
+ * @brief Returns the clamped output (between 0 and 1) of the dot
+ * product of the vectors multiplied with a float.
+ * 
+ * @param x first vector
+ * @param y second vector
+ * @param f float to multiply with
+ * @return float clamped output between 0 and 1
+ */
 float sdot(vec3 x, vec3 y, float f)
 {
 	return glm::clamp(dot(x, y)*f, 0.0f, 1.0f);
 }
 
-/* Utility function to average the 3 colour channels */
+/**
+ * @brief Utility function to average the three colour channels
+ * 
+ * @param colour The colour channel to average.
+ * @return float Energy/Intensity of the colour
+ */
 float nrg(vec3 colour)
 {
 	return dot(colour, vec3(1.0/3.0));
 }
 
-/* Converting a smoothness value to alpha for the scattering distribution */
+/**
+ * @brief Converts a smoothness value to alpha for scattering distribution
+ * 
+ * @param s Smoothness Value
+ * @return float Alpha
+ */
 float SmoothnessToPhongAlpha(float s)
 {
 	return pow(1000.0, s*s);
 }
 
-/* Finding the tgn space given a normal */
+/**
+ * @brief Find the tangent space given a normal
+ * 
+ * @param norm Normal of the surface
+ * @return mat3 Tangent Space of the normal
+ */
 mat3 GetTgnSpace(vec3 norm)
 {
 	vec3 helper = vec3(1, 0, 0);
@@ -55,7 +101,15 @@ mat3 GetTgnSpace(vec3 norm)
 	return mat3(tgn, binorm, norm);
 }
 
-/* Sampling the hemisphere around the given normal and biases it based on the given alpha */
+/**
+ * @brief Sampling the hemisphere around the given normal and biases it based on the given alpha
+ * 
+ * @param norm Perfectly Reflected Ray off the hemisphere surface
+ * @param alpha Alpha
+ * @param e2 Random Number Generator
+ * @param dist Uniform Distribution
+ * @return vec3 Sampled Reflected Ray
+ */
 vec3 SampleHemi(vec3 norm, float alpha, mt19937& e2, uniform_real_distribution<float>& dist)
 {
 	float cosTheta = pow(randfloat(e2, dist), 1.0/(alpha + 1.0));
@@ -65,6 +119,20 @@ vec3 SampleHemi(vec3 norm, float alpha, mt19937& e2, uniform_real_distribution<f
 	return GetTgnSpace(norm)*tgnSpaceDir;
 }
 
+/**
+ * @brief Tests the given ray's intersection with the given triangle
+ * 
+ * @param ray Ray to test intersection with
+ * @param vert0 First Vertex of the Triangle in AntiClockWise Order
+ * @param vert1 Second Vertex of the Triangle in AntiClockWise Order
+ * @param vert2 Third Vertex of the Triangle in AntiClockWise Order
+ * @param t Barycentric Coordinate 1 of the Triangle in case of intersection
+ * @param u Barycentric Coordinate 2 of the Triangle in case of intersection
+ * @param v Barycentric Coordinate 3 of the Triangle in case of intersection
+ * @return true Triangle intersects the ray and the intersection can be computed based on the
+ * Barycentric coordinates
+ * @return false Triangle does not intersect the ray
+ */
 bool intersectTgl_MT97(Ray ray, vec3 vert0, vec3 vert1, vec3 vert2, float& t, float& u, float& v)
 {
 	vec3 edge1 = vert1 - vert0, edge2 = vert2 - vert0;
@@ -85,6 +153,12 @@ bool intersectTgl_MT97(Ray ray, vec3 vert0, vec3 vert1, vec3 vert2, float& t, fl
 	return true;
 }
 
+/**
+ * @brief Tests ray intersection with the skybox/room at Infinity
+ * 
+ * @param ray Ray to intersect with
+ * @param bestHit Returns the RayHit of the hit skybox if the skybox is visible to the ray
+ */
 void intersectRoom(Ray ray, RayHit& bestHit)
 {
 	float halfLen = 10000, nearestDist = 10000000.0, denom;
@@ -223,130 +297,13 @@ void intersectRoom(Ray ray, RayHit& bestHit)
 	}
 }
 
-/* Function returning the colour of the pixel in the background intersected by a ray */
-vec3 drawBackground(vec3 rOrg, vec3 rDir)
-{
-	float halfLen = 10000, nearestDist = 10000000.0, denom;
-	bool testBack = true, testDown = true, testLeft = true;
-	vec3 nearest, pPt, pNorm;
-
-	/* Front face */
-	pPt = vec3(0.0, 0.0, -halfLen), pNorm = vec3(0.0, 0.0, 1.0);
-	denom = dot(pNorm, rDir);
-	if (abs(denom) > 0.0001) 
-	{
-		float t = dot(pPt - rOrg, pNorm)/denom;
-		if (t > 0.0001)
-		{
-			testBack = false;
-			nearest = rOrg + t*rDir;
-			nearestDist = length(t*rDir);
-		}
-	}
-	else testBack = false;
-
-	/* Back face */
-	if (testBack)
-	{
-		pPt = vec3(0.0, 0.0, halfLen), pNorm = vec3(0.0, 0.0, -1.0);
-		denom = dot(pNorm, rDir);
-		if (abs(denom) > 0.0001) 
-		{
-			float t = dot(pPt - rOrg, pNorm)/denom;
-			if (t > 0.0001)
-			{
-				float dist = length(t*rDir);
-				if (dist < nearestDist)
-				{
-					nearest = rOrg + t*rDir;
-					nearestDist = dist;
-				}
-			}
-		}
-	}
-
-	/* Up face */
-	pPt = vec3(0.0, halfLen, 0.0), pNorm = vec3(0.0, -1.0, 0.0);
-	denom = dot(pNorm, rDir);
-	if (abs(denom) > 0.0001) 
-	{
-		float t = dot(pPt - rOrg, pNorm)/denom;
-		if (t > 0.0001)
-		{
-			testDown = false;
-			float dist = length(t*rDir);
-			if (dist < nearestDist)
-			{
-				nearest = rOrg + t*rDir;
-				nearestDist = dist;
-			}
-		}
-	}
-	else testDown = false;
-
-	/* Down face */
-	if (testDown)
-	{
-		pPt = vec3(0.0, -halfLen, 0.0), pNorm = vec3(0.0, 1.0, 0.0);
-		denom = dot(pNorm, rDir);
-		if (abs(denom) > 0.0001) 
-		{
-			float t = dot(pPt - rOrg, pNorm)/denom;
-			if (t > 0.0001)
-			{
-				float dist = length(t*rDir);
-				if (dist < nearestDist)
-				{
-					nearest = rOrg + t*rDir;
-					nearestDist = dist;
-				}
-			}
-		}
-	}
-
-	/* Right face */
-	pPt = vec3(halfLen, 0.0, 0.0), pNorm = vec3(-1.0, 0.0, 0.0);
-	denom = dot(pNorm, rDir);
-	if (abs(denom) > 0.0001) 
-	{
-		float t = dot(pPt - rOrg, pNorm)/denom;
-		if (t > 0.0001)
-		{
-			testLeft = false;
-			float dist = length(t*rDir);
-			if (dist < nearestDist)
-			{
-				nearest = rOrg + t*rDir;
-				nearestDist = dist;
-			}
-		}
-	}
-	else testLeft = false;
-
-	/* Left face */
-	if (testLeft)
-	{
-		pPt = vec3(-halfLen, 0.0, 0.0), pNorm = vec3(1.0, 0.0, 0.0);
-		denom = dot(pNorm, rDir);
-		if (abs(denom) > 0.0001) 
-		{
-			float t = dot(pPt - rOrg, pNorm)/denom;
-			if (t > 0.0001)
-			{
-				float dist = length(t*rDir);
-				if (dist < nearestDist)
-				{
-					nearest = rOrg + t*rDir;
-					nearestDist = dist;
-				}
-			}
-		}
-	}
-
-	return vec3(0.25);
-}
-
-/* Testing the intersection of a ray and the ground plane and modifying the previous best hit if the ground is visible to that ray */
+/**
+ * @brief Tests the intersection of the ray with the Ground and updates the bestHit
+ * in case the ground plane is visible to the ray
+ * 
+ * @param ray Ray to test intersection with
+ * @param bestHit RayHit to change after finding that the ground plane is visible
+ */
 void intersectGroundPlane(Ray ray, RayHit& bestHit)
 {
 	float t = (-ray.org.y - 17.0f)/ray.dir.y;
@@ -363,7 +320,14 @@ void intersectGroundPlane(Ray ray, RayHit& bestHit)
 	}
 }
 
-/* Testing the intersection of a ray and a sph and modifying the previous best hit if the ground is visible to that ray */
+/* */
+/**
+ * @brief  Testing the intersection of a ray and a sphere and modifying the 
+ * previous best hit if the sphere is visible to that ray
+ * @param ray Ray to test intersection with
+ * @param bestHit bestHit to modify in case of visibility
+ * @param sph Sphere to test intersection and visibility with
+ */
 void intersectSph(Ray ray, RayHit& bestHit, Sph sph)
 {
 	vec3 d = ray.org - sph.pos;
@@ -385,7 +349,13 @@ void intersectSph(Ray ray, RayHit& bestHit, Sph sph)
 	}
 }
 
-/* Driver tracing function to loop through all the objects in the scene and test interection */
+/**
+ * @brief Goes through all the objects in the scene and bounces the
+ * given ray off the closest object visible to it.
+ * 
+ * @param ray Ray to bounce off
+ * @return RayHit Point at which the ray has bounced off
+ */
 RayHit Trace(Ray ray)
 {
 	RayHit bestHit = CreateRayHit();
@@ -657,13 +627,16 @@ RayHit Trace(Ray ray)
 	return bestHit;
 }
 
-float getPss(list<float>& pssv) {
-	float toret = pssv.front();
-	pssv.pop_front();
-	return toret;
-}
-
-/* Driver colouring function to colours pixels based on hit properties, and then modify the ray to denote the new reflection dir */
+/**
+ * @brief Returns the color contribution from the hitting of the given ray at the rayhit
+ * and updates the ray to the new reflected direction and its other properties.
+ * 
+ * @param ray Ray that raycasted
+ * @param hit RayHit where the raycasted ray had hit
+ * @param e2 Random Number Generator
+ * @param dist Uniform Distribution Object
+ * @return vec3 Color contribution by the ray and its ray hit
+ */
 vec3 Shade(Ray& ray, RayHit hit, mt19937& e2, uniform_real_distribution<float>& dist)
 {
 	if (hit.dist > 0.01)
@@ -706,6 +679,15 @@ vec3 Shade(Ray& ray, RayHit hit, mt19937& e2, uniform_real_distribution<float>& 
 	}
 }
 
+/**
+ * @brief Returns the number of nodes in the path
+ * to delete.
+ * 
+ * @param xl Length of the path.
+ * @param e2 Random Number Generator
+ * @param dist Normal Distribution Object
+ * @return int Number of nodes in the path to delete
+ */
 int getLd(int xl, mt19937& e2, normal_distribution<float>& dist)
 {
 	return dist(e2);
@@ -716,20 +698,27 @@ int getLd(int xl, mt19937& e2, normal_distribution<float>& dist)
 const int mutations = MUTATIONS;
 const int numHits = NUM_HITS;
 
+/**
+ * @brief Return the luminance of the color throughput
+ * 
+ * @param colour Color for which the luminance has to be returned
+ * @return float Luminance of the given color
+ */
 float luminance(vec3 colour)
 {
 	return 0.299*colour.x + 0.587*colour.y + 0.114*colour.z;
 }
 
-void traceAndShadePath(Ray &ray, vec3& rslt, int nodes, mt19937& e2, uniform_real_distribution<float>& dist, list<float>& pssv)
-{
-	for (int i = 1; i < nodes; i++) {
-		RayHit hit = Trace(ray);
-		rslt += ray.nrg*Shade(ray, hit, e2, dist);
-	}
-}
-
-/* Looping through all pixels and filling them with a colour */
+/**
+ * @brief Sets the color of a single pixel.
+ * Bottom Left is (0, 0), Top Right is (imgWidth-1, imgHeight-1)
+ * @param x x-coordinate of the pixel
+ * @param y y-coordinate of the pixel
+ * @param imgWidth width of the framebuffer window
+ * @param imgHeight height of the framebuffer window
+ * @param frameBuffer pointer to the framebuffer
+ * @param done Atomic int to track how many pixels have been rendered
+ */
 void drawPixel(int x, int y, int imgWidth, int imgHeight, vec4* frameBuffer, atomic<int>& done)
 {
 	random_device rd;

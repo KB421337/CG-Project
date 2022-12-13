@@ -1,0 +1,399 @@
+\hypertarget{_shader_impl_8cpp}{}\doxysection{Shader\+Impl.\+cpp File Reference}
+\label{_shader_impl_8cpp}\index{ShaderImpl.cpp@{ShaderImpl.cpp}}
+
+
+Contains the C++ implementation of the \mbox{\hyperlink{struct_path}{Path}} Tracing MLT Shader.  
+
+
+{\ttfamily \#include $<$algorithm$>$}\newline
+{\ttfamily \#include $<$iostream$>$}\newline
+{\ttfamily \#include \char`\"{}Mlt\+Pixel.\+hpp\char`\"{}}\newline
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{struct_ray_hit}{Ray\+Hit}} \mbox{\hyperlink{_shader_impl_8cpp_a5f2b29126f640c5c18d0b72793c7710c}{Create\+Ray\+Hit}} ()
+\begin{DoxyCompactList}\small\item\em Initializes a \mbox{\hyperlink{struct_ray_hit}{Ray\+Hit}} object. \end{DoxyCompactList}\item 
+float \mbox{\hyperlink{_shader_impl_8cpp_a7f1d681568f83f92f01962e23a8bf623}{randfloat}} (mt19937 \&e2, uniform\+\_\+real\+\_\+distribution$<$ float $>$ \&dist)
+\begin{DoxyCompactList}\small\item\em Generates a random float from \mbox{[}0, 1\mbox{]} based on the uniform distribution. \end{DoxyCompactList}\item 
+float \mbox{\hyperlink{_shader_impl_8cpp_a8d5f79113a456540cb4b58b1d99a93ce}{sdot}} (vec3 x, vec3 y, float f)
+\begin{DoxyCompactList}\small\item\em Returns the clamped output (between 0 and 1) of the dot product of the vectors multiplied with a float. \end{DoxyCompactList}\item 
+float \mbox{\hyperlink{_shader_impl_8cpp_a102ef745e4f36225d691b5b331a78ec4}{nrg}} (vec3 colour)
+\begin{DoxyCompactList}\small\item\em Utility function to average the three colour channels. \end{DoxyCompactList}\item 
+float \mbox{\hyperlink{_shader_impl_8cpp_adabef53a9cf58b7068e49782213f0760}{Smoothness\+To\+Phong\+Alpha}} (float s)
+\begin{DoxyCompactList}\small\item\em Converts a smoothness value to alpha for scattering distribution. \end{DoxyCompactList}\item 
+mat3 \mbox{\hyperlink{_shader_impl_8cpp_a414f59d7b0222e76e783941cc6140efb}{Get\+Tgn\+Space}} (vec3 norm)
+\begin{DoxyCompactList}\small\item\em Find the tangent space given a normal. \end{DoxyCompactList}\item 
+vec3 \mbox{\hyperlink{_shader_impl_8cpp_ab3a08a5956bc4af0ccd69f354e2c32cf}{Sample\+Hemi}} (vec3 norm, float alpha, mt19937 \&e2, uniform\+\_\+real\+\_\+distribution$<$ float $>$ \&dist)
+\begin{DoxyCompactList}\small\item\em Sampling the hemisphere around the given normal and biases it based on the given alpha. \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{_shader_impl_8cpp_a0f2f372b9ddbba9de552ac5ca8a5c4e9}{intersect\+Tgl\+\_\+\+MT97}} (\mbox{\hyperlink{struct_ray}{Ray}} ray, vec3 vert0, vec3 vert1, vec3 vert2, float \&t, float \&u, float \&v)
+\begin{DoxyCompactList}\small\item\em Tests the given ray\textquotesingle{}s intersection with the given triangle. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{_shader_impl_8cpp_a37eff0a41d960ab457ae51d7fe0579bf}{intersect\+Room}} (\mbox{\hyperlink{struct_ray}{Ray}} ray, \mbox{\hyperlink{struct_ray_hit}{Ray\+Hit}} \&best\+Hit)
+\begin{DoxyCompactList}\small\item\em Tests ray intersection with the skybox/room at Infinity. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{_shader_impl_8cpp_add662c805ed78def9a46c17fbbaed942}{intersect\+Ground\+Plane}} (\mbox{\hyperlink{struct_ray}{Ray}} ray, \mbox{\hyperlink{struct_ray_hit}{Ray\+Hit}} \&best\+Hit)
+\begin{DoxyCompactList}\small\item\em Tests the intersection of the ray with the Ground and updates the best\+Hit in case the ground plane is visible to the ray. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{_shader_impl_8cpp_ac25bbb2a5cc0d2ccd1492588e181eabb}{intersect\+Sph}} (\mbox{\hyperlink{struct_ray}{Ray}} ray, \mbox{\hyperlink{struct_ray_hit}{Ray\+Hit}} \&best\+Hit, \mbox{\hyperlink{struct_sph}{Sph}} sph)
+\begin{DoxyCompactList}\small\item\em Testing the intersection of a ray and a sphere and modifying the previous best hit if the sphere is visible to that ray. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{struct_ray_hit}{Ray\+Hit}} \mbox{\hyperlink{_shader_impl_8cpp_adad113f3b84b00b579317a6c20a7302e}{Trace}} (\mbox{\hyperlink{struct_ray}{Ray}} ray)
+\begin{DoxyCompactList}\small\item\em Goes through all the objects in the scene and bounces the given ray off the closest object visible to it. \end{DoxyCompactList}\item 
+vec3 \mbox{\hyperlink{_shader_impl_8cpp_a183d32c7e8d05e2ee99d21c768ea299e}{Shade}} (\mbox{\hyperlink{struct_ray}{Ray}} \&ray, \mbox{\hyperlink{struct_ray_hit}{Ray\+Hit}} hit, mt19937 \&e2, uniform\+\_\+real\+\_\+distribution$<$ float $>$ \&dist)
+\begin{DoxyCompactList}\small\item\em Returns the color contribution from the hitting of the given ray at the rayhit and updates the ray to the new reflected direction and its other properties. \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{_shader_impl_8cpp_a89d505bdf02800dbf01d0f85dc167d08}{get\+Ld}} (int xl, mt19937 \&e2, normal\+\_\+distribution$<$ float $>$ \&dist)
+\begin{DoxyCompactList}\small\item\em Returns the number of nodes in the path to delete. \end{DoxyCompactList}\item 
+float \mbox{\hyperlink{_shader_impl_8cpp_adba3590bf0ecc5439b3a7dc1598f744a}{luminance}} (vec3 colour)
+\begin{DoxyCompactList}\small\item\em Return the luminance of the color throughput. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{_shader_impl_8cpp_abc5b82b80718603cce7ce88e97e9122c}{draw\+Pixel}} (int x, int y, int img\+Width, int img\+Height, vec4 $\ast$frame\+Buffer, atomic$<$ int $>$ \&done)
+\begin{DoxyCompactList}\small\item\em Sets the color of a single pixel. Bottom Left is (0, 0), Top Right is (img\+Width-\/1, img\+Height-\/1) \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{_shader_impl_8cpp_adc8e2f6f2e41a0bcf7e5345a79519be0}\label{_shader_impl_8cpp_adc8e2f6f2e41a0bcf7e5345a79519be0}} 
+const int {\bfseries mutations} = MUTATIONS
+\item 
+\mbox{\Hypertarget{_shader_impl_8cpp_adbc48b36f00e83c9a56b0f2c97544af2}\label{_shader_impl_8cpp_adbc48b36f00e83c9a56b0f2c97544af2}} 
+const int {\bfseries num\+Hits} = NUM\+\_\+\+HITS
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Contains the C++ implementation of the \mbox{\hyperlink{struct_path}{Path}} Tracing MLT Shader. 
+
+\begin{DoxyAuthor}{Author}
+
+\end{DoxyAuthor}
+\begin{DoxyVersion}{Version}
+0.\+1 
+\end{DoxyVersion}
+\begin{DoxyDate}{Date}
+2022-\/12-\/14
+\end{DoxyDate}
+\begin{DoxyCopyright}{Copyright}
+Copyright (c) 2022 
+\end{DoxyCopyright}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{_shader_impl_8cpp_a5f2b29126f640c5c18d0b72793c7710c}\label{_shader_impl_8cpp_a5f2b29126f640c5c18d0b72793c7710c}} 
+\index{ShaderImpl.cpp@{ShaderImpl.cpp}!CreateRayHit@{CreateRayHit}}
+\index{CreateRayHit@{CreateRayHit}!ShaderImpl.cpp@{ShaderImpl.cpp}}
+\doxysubsubsection{\texorpdfstring{CreateRayHit()}{CreateRayHit()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{struct_ray_hit}{Ray\+Hit}} Create\+Ray\+Hit (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Initializes a \mbox{\hyperlink{struct_ray_hit}{Ray\+Hit}} object. 
+
+\begin{DoxyReturn}{Returns}
+\mbox{\hyperlink{struct_ray_hit}{Ray\+Hit}} object initialized 
+\end{DoxyReturn}
+\mbox{\Hypertarget{_shader_impl_8cpp_abc5b82b80718603cce7ce88e97e9122c}\label{_shader_impl_8cpp_abc5b82b80718603cce7ce88e97e9122c}} 
+\index{ShaderImpl.cpp@{ShaderImpl.cpp}!drawPixel@{drawPixel}}
+\index{drawPixel@{drawPixel}!ShaderImpl.cpp@{ShaderImpl.cpp}}
+\doxysubsubsection{\texorpdfstring{drawPixel()}{drawPixel()}}
+{\footnotesize\ttfamily void draw\+Pixel (\begin{DoxyParamCaption}\item[{int}]{x,  }\item[{int}]{y,  }\item[{int}]{img\+Width,  }\item[{int}]{img\+Height,  }\item[{vec4 $\ast$}]{frame\+Buffer,  }\item[{atomic$<$ int $>$ \&}]{done }\end{DoxyParamCaption})}
+
+
+
+Sets the color of a single pixel. Bottom Left is (0, 0), Top Right is (img\+Width-\/1, img\+Height-\/1) 
+
+
+\begin{DoxyParams}{Parameters}
+{\em x} & x-\/coordinate of the pixel \\
+\hline
+{\em y} & y-\/coordinate of the pixel \\
+\hline
+{\em img\+Width} & width of the framebuffer window \\
+\hline
+{\em img\+Height} & height of the framebuffer window \\
+\hline
+{\em frame\+Buffer} & pointer to the framebuffer \\
+\hline
+{\em done} & Atomic int to track how many pixels have been rendered \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{_shader_impl_8cpp_a89d505bdf02800dbf01d0f85dc167d08}\label{_shader_impl_8cpp_a89d505bdf02800dbf01d0f85dc167d08}} 
+\index{ShaderImpl.cpp@{ShaderImpl.cpp}!getLd@{getLd}}
+\index{getLd@{getLd}!ShaderImpl.cpp@{ShaderImpl.cpp}}
+\doxysubsubsection{\texorpdfstring{getLd()}{getLd()}}
+{\footnotesize\ttfamily int get\+Ld (\begin{DoxyParamCaption}\item[{int}]{xl,  }\item[{mt19937 \&}]{e2,  }\item[{normal\+\_\+distribution$<$ float $>$ \&}]{dist }\end{DoxyParamCaption})}
+
+
+
+Returns the number of nodes in the path to delete. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em xl} & Length of the path. \\
+\hline
+{\em e2} & Random Number Generator \\
+\hline
+{\em dist} & Normal Distribution Object \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+int Number of nodes in the path to delete 
+\end{DoxyReturn}
+\mbox{\Hypertarget{_shader_impl_8cpp_a414f59d7b0222e76e783941cc6140efb}\label{_shader_impl_8cpp_a414f59d7b0222e76e783941cc6140efb}} 
+\index{ShaderImpl.cpp@{ShaderImpl.cpp}!GetTgnSpace@{GetTgnSpace}}
+\index{GetTgnSpace@{GetTgnSpace}!ShaderImpl.cpp@{ShaderImpl.cpp}}
+\doxysubsubsection{\texorpdfstring{GetTgnSpace()}{GetTgnSpace()}}
+{\footnotesize\ttfamily mat3 Get\+Tgn\+Space (\begin{DoxyParamCaption}\item[{vec3}]{norm }\end{DoxyParamCaption})}
+
+
+
+Find the tangent space given a normal. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em norm} & Normal of the surface \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+mat3 Tangent Space of the normal 
+\end{DoxyReturn}
+\mbox{\Hypertarget{_shader_impl_8cpp_add662c805ed78def9a46c17fbbaed942}\label{_shader_impl_8cpp_add662c805ed78def9a46c17fbbaed942}} 
+\index{ShaderImpl.cpp@{ShaderImpl.cpp}!intersectGroundPlane@{intersectGroundPlane}}
+\index{intersectGroundPlane@{intersectGroundPlane}!ShaderImpl.cpp@{ShaderImpl.cpp}}
+\doxysubsubsection{\texorpdfstring{intersectGroundPlane()}{intersectGroundPlane()}}
+{\footnotesize\ttfamily void intersect\+Ground\+Plane (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{struct_ray}{Ray}}}]{ray,  }\item[{\mbox{\hyperlink{struct_ray_hit}{Ray\+Hit}} \&}]{best\+Hit }\end{DoxyParamCaption})}
+
+
+
+Tests the intersection of the ray with the Ground and updates the best\+Hit in case the ground plane is visible to the ray. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em ray} & \mbox{\hyperlink{struct_ray}{Ray}} to test intersection with \\
+\hline
+{\em best\+Hit} & \mbox{\hyperlink{struct_ray_hit}{Ray\+Hit}} to change after finding that the ground plane is visible \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{_shader_impl_8cpp_a37eff0a41d960ab457ae51d7fe0579bf}\label{_shader_impl_8cpp_a37eff0a41d960ab457ae51d7fe0579bf}} 
+\index{ShaderImpl.cpp@{ShaderImpl.cpp}!intersectRoom@{intersectRoom}}
+\index{intersectRoom@{intersectRoom}!ShaderImpl.cpp@{ShaderImpl.cpp}}
+\doxysubsubsection{\texorpdfstring{intersectRoom()}{intersectRoom()}}
+{\footnotesize\ttfamily void intersect\+Room (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{struct_ray}{Ray}}}]{ray,  }\item[{\mbox{\hyperlink{struct_ray_hit}{Ray\+Hit}} \&}]{best\+Hit }\end{DoxyParamCaption})}
+
+
+
+Tests ray intersection with the skybox/room at Infinity. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em ray} & \mbox{\hyperlink{struct_ray}{Ray}} to intersect with \\
+\hline
+{\em best\+Hit} & Returns the \mbox{\hyperlink{struct_ray_hit}{Ray\+Hit}} of the hit skybox if the skybox is visible to the ray \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{_shader_impl_8cpp_ac25bbb2a5cc0d2ccd1492588e181eabb}\label{_shader_impl_8cpp_ac25bbb2a5cc0d2ccd1492588e181eabb}} 
+\index{ShaderImpl.cpp@{ShaderImpl.cpp}!intersectSph@{intersectSph}}
+\index{intersectSph@{intersectSph}!ShaderImpl.cpp@{ShaderImpl.cpp}}
+\doxysubsubsection{\texorpdfstring{intersectSph()}{intersectSph()}}
+{\footnotesize\ttfamily void intersect\+Sph (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{struct_ray}{Ray}}}]{ray,  }\item[{\mbox{\hyperlink{struct_ray_hit}{Ray\+Hit}} \&}]{best\+Hit,  }\item[{\mbox{\hyperlink{struct_sph}{Sph}}}]{sph }\end{DoxyParamCaption})}
+
+
+
+Testing the intersection of a ray and a sphere and modifying the previous best hit if the sphere is visible to that ray. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em ray} & \mbox{\hyperlink{struct_ray}{Ray}} to test intersection with \\
+\hline
+{\em best\+Hit} & best\+Hit to modify in case of visibility \\
+\hline
+{\em sph} & Sphere to test intersection and visibility with \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{_shader_impl_8cpp_a0f2f372b9ddbba9de552ac5ca8a5c4e9}\label{_shader_impl_8cpp_a0f2f372b9ddbba9de552ac5ca8a5c4e9}} 
+\index{ShaderImpl.cpp@{ShaderImpl.cpp}!intersectTgl\_MT97@{intersectTgl\_MT97}}
+\index{intersectTgl\_MT97@{intersectTgl\_MT97}!ShaderImpl.cpp@{ShaderImpl.cpp}}
+\doxysubsubsection{\texorpdfstring{intersectTgl\_MT97()}{intersectTgl\_MT97()}}
+{\footnotesize\ttfamily bool intersect\+Tgl\+\_\+\+MT97 (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{struct_ray}{Ray}}}]{ray,  }\item[{vec3}]{vert0,  }\item[{vec3}]{vert1,  }\item[{vec3}]{vert2,  }\item[{float \&}]{t,  }\item[{float \&}]{u,  }\item[{float \&}]{v }\end{DoxyParamCaption})}
+
+
+
+Tests the given ray\textquotesingle{}s intersection with the given triangle. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em ray} & \mbox{\hyperlink{struct_ray}{Ray}} to test intersection with \\
+\hline
+{\em vert0} & First Vertex of the Triangle in Anti\+Clock\+Wise Order \\
+\hline
+{\em vert1} & Second Vertex of the Triangle in Anti\+Clock\+Wise Order \\
+\hline
+{\em vert2} & Third Vertex of the Triangle in Anti\+Clock\+Wise Order \\
+\hline
+{\em t} & Barycentric Coordinate 1 of the Triangle in case of intersection \\
+\hline
+{\em u} & Barycentric Coordinate 2 of the Triangle in case of intersection \\
+\hline
+{\em v} & Barycentric Coordinate 3 of the Triangle in case of intersection \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+true Triangle intersects the ray and the intersection can be computed based on the Barycentric coordinates 
+
+false Triangle does not intersect the ray 
+\end{DoxyReturn}
+\mbox{\Hypertarget{_shader_impl_8cpp_adba3590bf0ecc5439b3a7dc1598f744a}\label{_shader_impl_8cpp_adba3590bf0ecc5439b3a7dc1598f744a}} 
+\index{ShaderImpl.cpp@{ShaderImpl.cpp}!luminance@{luminance}}
+\index{luminance@{luminance}!ShaderImpl.cpp@{ShaderImpl.cpp}}
+\doxysubsubsection{\texorpdfstring{luminance()}{luminance()}}
+{\footnotesize\ttfamily float luminance (\begin{DoxyParamCaption}\item[{vec3}]{colour }\end{DoxyParamCaption})}
+
+
+
+Return the luminance of the color throughput. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em colour} & Color for which the luminance has to be returned \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+float Luminance of the given color 
+\end{DoxyReturn}
+\mbox{\Hypertarget{_shader_impl_8cpp_a102ef745e4f36225d691b5b331a78ec4}\label{_shader_impl_8cpp_a102ef745e4f36225d691b5b331a78ec4}} 
+\index{ShaderImpl.cpp@{ShaderImpl.cpp}!nrg@{nrg}}
+\index{nrg@{nrg}!ShaderImpl.cpp@{ShaderImpl.cpp}}
+\doxysubsubsection{\texorpdfstring{nrg()}{nrg()}}
+{\footnotesize\ttfamily float nrg (\begin{DoxyParamCaption}\item[{vec3}]{colour }\end{DoxyParamCaption})}
+
+
+
+Utility function to average the three colour channels. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em colour} & The colour channel to average. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+float Energy/\+Intensity of the colour 
+\end{DoxyReturn}
+\mbox{\Hypertarget{_shader_impl_8cpp_a7f1d681568f83f92f01962e23a8bf623}\label{_shader_impl_8cpp_a7f1d681568f83f92f01962e23a8bf623}} 
+\index{ShaderImpl.cpp@{ShaderImpl.cpp}!randfloat@{randfloat}}
+\index{randfloat@{randfloat}!ShaderImpl.cpp@{ShaderImpl.cpp}}
+\doxysubsubsection{\texorpdfstring{randfloat()}{randfloat()}}
+{\footnotesize\ttfamily float randfloat (\begin{DoxyParamCaption}\item[{mt19937 \&}]{e2,  }\item[{uniform\+\_\+real\+\_\+distribution$<$ float $>$ \&}]{dist }\end{DoxyParamCaption})}
+
+
+
+Generates a random float from \mbox{[}0, 1\mbox{]} based on the uniform distribution. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em e2} & Random number generator engine \\
+\hline
+{\em dist} & Uniform Distribution object \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+float Random float between 0 and 1 
+\end{DoxyReturn}
+\mbox{\Hypertarget{_shader_impl_8cpp_ab3a08a5956bc4af0ccd69f354e2c32cf}\label{_shader_impl_8cpp_ab3a08a5956bc4af0ccd69f354e2c32cf}} 
+\index{ShaderImpl.cpp@{ShaderImpl.cpp}!SampleHemi@{SampleHemi}}
+\index{SampleHemi@{SampleHemi}!ShaderImpl.cpp@{ShaderImpl.cpp}}
+\doxysubsubsection{\texorpdfstring{SampleHemi()}{SampleHemi()}}
+{\footnotesize\ttfamily vec3 Sample\+Hemi (\begin{DoxyParamCaption}\item[{vec3}]{norm,  }\item[{float}]{alpha,  }\item[{mt19937 \&}]{e2,  }\item[{uniform\+\_\+real\+\_\+distribution$<$ float $>$ \&}]{dist }\end{DoxyParamCaption})}
+
+
+
+Sampling the hemisphere around the given normal and biases it based on the given alpha. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em norm} & Perfectly Reflected \mbox{\hyperlink{struct_ray}{Ray}} off the hemisphere surface \\
+\hline
+{\em alpha} & Alpha \\
+\hline
+{\em e2} & Random Number Generator \\
+\hline
+{\em dist} & Uniform Distribution \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+vec3 Sampled Reflected \mbox{\hyperlink{struct_ray}{Ray}} 
+\end{DoxyReturn}
+\mbox{\Hypertarget{_shader_impl_8cpp_a8d5f79113a456540cb4b58b1d99a93ce}\label{_shader_impl_8cpp_a8d5f79113a456540cb4b58b1d99a93ce}} 
+\index{ShaderImpl.cpp@{ShaderImpl.cpp}!sdot@{sdot}}
+\index{sdot@{sdot}!ShaderImpl.cpp@{ShaderImpl.cpp}}
+\doxysubsubsection{\texorpdfstring{sdot()}{sdot()}}
+{\footnotesize\ttfamily float sdot (\begin{DoxyParamCaption}\item[{vec3}]{x,  }\item[{vec3}]{y,  }\item[{float}]{f }\end{DoxyParamCaption})}
+
+
+
+Returns the clamped output (between 0 and 1) of the dot product of the vectors multiplied with a float. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em x} & first vector \\
+\hline
+{\em y} & second vector \\
+\hline
+{\em f} & float to multiply with \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+float clamped output between 0 and 1 
+\end{DoxyReturn}
+\mbox{\Hypertarget{_shader_impl_8cpp_a183d32c7e8d05e2ee99d21c768ea299e}\label{_shader_impl_8cpp_a183d32c7e8d05e2ee99d21c768ea299e}} 
+\index{ShaderImpl.cpp@{ShaderImpl.cpp}!Shade@{Shade}}
+\index{Shade@{Shade}!ShaderImpl.cpp@{ShaderImpl.cpp}}
+\doxysubsubsection{\texorpdfstring{Shade()}{Shade()}}
+{\footnotesize\ttfamily vec3 Shade (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{struct_ray}{Ray}} \&}]{ray,  }\item[{\mbox{\hyperlink{struct_ray_hit}{Ray\+Hit}}}]{hit,  }\item[{mt19937 \&}]{e2,  }\item[{uniform\+\_\+real\+\_\+distribution$<$ float $>$ \&}]{dist }\end{DoxyParamCaption})}
+
+
+
+Returns the color contribution from the hitting of the given ray at the rayhit and updates the ray to the new reflected direction and its other properties. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em ray} & \mbox{\hyperlink{struct_ray}{Ray}} that raycasted \\
+\hline
+{\em hit} & \mbox{\hyperlink{struct_ray_hit}{Ray\+Hit}} where the raycasted ray had hit \\
+\hline
+{\em e2} & Random Number Generator \\
+\hline
+{\em dist} & Uniform Distribution Object \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+vec3 Color contribution by the ray and its ray hit 
+\end{DoxyReturn}
+\mbox{\Hypertarget{_shader_impl_8cpp_adabef53a9cf58b7068e49782213f0760}\label{_shader_impl_8cpp_adabef53a9cf58b7068e49782213f0760}} 
+\index{ShaderImpl.cpp@{ShaderImpl.cpp}!SmoothnessToPhongAlpha@{SmoothnessToPhongAlpha}}
+\index{SmoothnessToPhongAlpha@{SmoothnessToPhongAlpha}!ShaderImpl.cpp@{ShaderImpl.cpp}}
+\doxysubsubsection{\texorpdfstring{SmoothnessToPhongAlpha()}{SmoothnessToPhongAlpha()}}
+{\footnotesize\ttfamily float Smoothness\+To\+Phong\+Alpha (\begin{DoxyParamCaption}\item[{float}]{s }\end{DoxyParamCaption})}
+
+
+
+Converts a smoothness value to alpha for scattering distribution. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em s} & Smoothness Value \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+float Alpha 
+\end{DoxyReturn}
+\mbox{\Hypertarget{_shader_impl_8cpp_adad113f3b84b00b579317a6c20a7302e}\label{_shader_impl_8cpp_adad113f3b84b00b579317a6c20a7302e}} 
+\index{ShaderImpl.cpp@{ShaderImpl.cpp}!Trace@{Trace}}
+\index{Trace@{Trace}!ShaderImpl.cpp@{ShaderImpl.cpp}}
+\doxysubsubsection{\texorpdfstring{Trace()}{Trace()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{struct_ray_hit}{Ray\+Hit}} Trace (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{struct_ray}{Ray}}}]{ray }\end{DoxyParamCaption})}
+
+
+
+Goes through all the objects in the scene and bounces the given ray off the closest object visible to it. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em ray} & \mbox{\hyperlink{struct_ray}{Ray}} to bounce off \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+\mbox{\hyperlink{struct_ray_hit}{Ray\+Hit}} Point at which the ray has bounced off 
+\end{DoxyReturn}

@@ -6,6 +6,17 @@
 // - Nishith Kumar         | 2020A7PS0157H
 // - Shreyas Gupta         | 2019A7PS0121H
 
+/**
+ * @file Main.cpp
+ * @author 
+ * @brief Contains the initialization and main render loop
+ * @version 0.1
+ * @date 2022-12-14
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -33,11 +44,24 @@
 
 using namespace std;
 
+/**
+ * @brief Clears the OpenGL error stream.
+ * 
+ */
 void GlClearError()
 {
     while (glGetError() != GL_NO_ERROR);
 }
 
+/**
+ * @brief Logs the error after executing any OpenGL function.
+ * 
+ * @param func string containing the OpenGL function name
+ * @param file string of the file name containing the function call
+ * @param line line number in the file
+ * @return true There was no error
+ * @return false There was some error
+ */
 bool GlLogCall(const char* func, const char* file, int line)
 {
     if (GLenum error = glGetError())
@@ -48,6 +72,13 @@ bool GlLogCall(const char* func, const char* file, int line)
     return true;
 }
 
+
+/**
+ * @brief Reads the given file for GLSL Shader code
+ * 
+ * @param path Path of the GLSL file
+ * @return string Source code read from the file
+ */
 string shdrSrc(string path)
 {
     ifstream f(path);
@@ -58,34 +89,15 @@ string shdrSrc(string path)
     return s;
 }
 
-unsigned int loadCubemap(vector<string> faces)
-{
-    unsigned int texId;
-    int w, h, nrChans;
-    glGenTextures(1, &texId);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, texId);
-    for (unsigned int i = 0; i < faces.size(); i++)
-    {
-        unsigned char* data = stbi_load(faces[i].c_str(), &w, &h, &nrChans, 0);
-        if (data)
-        {
-            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-            stbi_image_free(data);
-        }
-        else
-        {
-            cout << "Cubemap tex failed to load at path: " << faces[i] << "\n";
-            stbi_image_free(data);
-        }
-    }
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    return texId;
-}
-
+/**
+ * @brief Thread callback function for rendering a single row of pixels.
+ * 
+ * @param y Index of row to render
+ * @param imgWidth Width of the texture image
+ * @param imgHeight Height of the texture image
+ * @param frameBuff Pointer to the vec4 frameBuffer for storing the colors
+ * @param done Atomic int to track the number of pixels rendered
+ */
 void runXLoop(int y, int imgWidth, int imgHeight, vec4* frameBuff, atomic<int>& done)
 {
     for (int x = 0; x < imgWidth; x++) {
@@ -93,6 +105,11 @@ void runXLoop(int y, int imgWidth, int imgHeight, vec4* frameBuff, atomic<int>& 
     }
 }
 
+/**
+ * @brief Main function of the application.
+ * 
+ * @return int 
+ */
 int main()
 {
     GLFWwindow* window;
@@ -203,16 +220,7 @@ int main()
     glBufferData(GL_UNIFORM_BUFFER, sizeof(mesh), NULL, GL_STATIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
     glBindBufferBase(GL_UNIFORM_BUFFER, 0, meshBlock);
-    vector<string> faces
-    {
-        "skybox/r.png",
-        "skybox/l.png",
-        "skybox/u.png",
-        "skybox/d.png",
-        "skybox/f.png",
-        "skybox/b.png"
-    };
-    unsigned int cubemapTex = loadCubemap(faces);
+
     float iter = 0.0f, aperture[4] = {0.0f, 0.0f, 10.0f, 1.0f}, seed = 0.5f, dc = 0.01;
     vec4* frameBuff = new vec4[texWid*texHt];
     while (!glfwWindowShouldClose(window))

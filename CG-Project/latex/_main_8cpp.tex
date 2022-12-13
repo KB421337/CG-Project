@@ -1,0 +1,152 @@
+\hypertarget{_main_8cpp}{}\doxysection{Main.\+cpp File Reference}
+\label{_main_8cpp}\index{Main.cpp@{Main.cpp}}
+
+
+Contains the initialization and main render loop.  
+
+
+{\ttfamily \#include $<$iostream$>$}\newline
+{\ttfamily \#include $<$fstream$>$}\newline
+{\ttfamily \#include $<$sstream$>$}\newline
+{\ttfamily \#include $<$string$>$}\newline
+{\ttfamily \#include $<$vector$>$}\newline
+{\ttfamily \#include $<$thread$>$}\newline
+{\ttfamily \#include $<$windows.\+h$>$}\newline
+{\ttfamily \#include $<$glad/glad.\+h$>$}\newline
+{\ttfamily \#include $<$GLFW/glfw3.\+h$>$}\newline
+{\ttfamily \#include \char`\"{}glm/glm.\+hpp\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}glm/gtc/matrix\+\_\+transform.\+hpp\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}glm/gtx/string\+\_\+cast.\+hpp\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}glm/gtc/type\+\_\+ptr.\+hpp\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}stb\+\_\+image.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}Mlt\+Pixel.\+hpp\char`\"{}}\newline
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{_main_8cpp_aca68c0d4ac8df0838e209fb5300f7be3}\label{_main_8cpp_aca68c0d4ac8df0838e209fb5300f7be3}} 
+\#define {\bfseries ASSERT}(x)~assert(x)
+\item 
+\mbox{\Hypertarget{_main_8cpp_a97009ef6213318f0f52b3fffaca10384}\label{_main_8cpp_a97009ef6213318f0f52b3fffaca10384}} 
+\#define {\bfseries Gl\+Call}(x)~\mbox{\hyperlink{_main_8cpp_a1ca58c1791f080d6e2ce2c877022e193}{Gl\+Clear\+Error}}(); x; ASSERT(\mbox{\hyperlink{_main_8cpp_a780a2dd9abedf87805aefc2fc0910643}{Gl\+Log\+Call}}(\#x, \+\_\+\+\_\+\+FILE\+\_\+\+\_\+, \+\_\+\+\_\+\+LINE\+\_\+\+\_\+))
+\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{_main_8cpp_a1ca58c1791f080d6e2ce2c877022e193}{Gl\+Clear\+Error}} ()
+\begin{DoxyCompactList}\small\item\em Clears the Open\+GL error stream. \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{_main_8cpp_a780a2dd9abedf87805aefc2fc0910643}{Gl\+Log\+Call}} (const char $\ast$func, const char $\ast$file, int line)
+\begin{DoxyCompactList}\small\item\em Logs the error after executing any Open\+GL function. \end{DoxyCompactList}\item 
+string \mbox{\hyperlink{_main_8cpp_ac77a629e8d102a92c76c197e5292cd86}{shdr\+Src}} (string path)
+\begin{DoxyCompactList}\small\item\em Reads the given file for GLSL Shader code. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{_main_8cpp_a4235252a1a42b0461cd609161da83647}{run\+XLoop}} (int y, int img\+Width, int img\+Height, vec4 $\ast$frame\+Buff, atomic$<$ int $>$ \&done)
+\begin{DoxyCompactList}\small\item\em Thread callback function for rendering a single row of pixels. \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{_main_8cpp_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}} ()
+\begin{DoxyCompactList}\small\item\em Main function of the application. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Contains the initialization and main render loop. 
+
+\begin{DoxyAuthor}{Author}
+
+\end{DoxyAuthor}
+\begin{DoxyVersion}{Version}
+0.\+1 
+\end{DoxyVersion}
+\begin{DoxyDate}{Date}
+2022-\/12-\/14
+\end{DoxyDate}
+\begin{DoxyCopyright}{Copyright}
+Copyright (c) 2022 
+\end{DoxyCopyright}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{_main_8cpp_a1ca58c1791f080d6e2ce2c877022e193}\label{_main_8cpp_a1ca58c1791f080d6e2ce2c877022e193}} 
+\index{Main.cpp@{Main.cpp}!GlClearError@{GlClearError}}
+\index{GlClearError@{GlClearError}!Main.cpp@{Main.cpp}}
+\doxysubsubsection{\texorpdfstring{GlClearError()}{GlClearError()}}
+{\footnotesize\ttfamily void Gl\+Clear\+Error (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Clears the Open\+GL error stream. 
+
+\mbox{\Hypertarget{_main_8cpp_a780a2dd9abedf87805aefc2fc0910643}\label{_main_8cpp_a780a2dd9abedf87805aefc2fc0910643}} 
+\index{Main.cpp@{Main.cpp}!GlLogCall@{GlLogCall}}
+\index{GlLogCall@{GlLogCall}!Main.cpp@{Main.cpp}}
+\doxysubsubsection{\texorpdfstring{GlLogCall()}{GlLogCall()}}
+{\footnotesize\ttfamily bool Gl\+Log\+Call (\begin{DoxyParamCaption}\item[{const char $\ast$}]{func,  }\item[{const char $\ast$}]{file,  }\item[{int}]{line }\end{DoxyParamCaption})}
+
+
+
+Logs the error after executing any Open\+GL function. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em func} & string containing the Open\+GL function name \\
+\hline
+{\em file} & string of the file name containing the function call \\
+\hline
+{\em line} & line number in the file \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+true There was no error 
+
+false There was some error 
+\end{DoxyReturn}
+\mbox{\Hypertarget{_main_8cpp_ae66f6b31b5ad750f1fe042a706a4e3d4}\label{_main_8cpp_ae66f6b31b5ad750f1fe042a706a4e3d4}} 
+\index{Main.cpp@{Main.cpp}!main@{main}}
+\index{main@{main}!Main.cpp@{Main.cpp}}
+\doxysubsubsection{\texorpdfstring{main()}{main()}}
+{\footnotesize\ttfamily int main (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Main function of the application. 
+
+\begin{DoxyReturn}{Returns}
+int 
+\end{DoxyReturn}
+\mbox{\Hypertarget{_main_8cpp_a4235252a1a42b0461cd609161da83647}\label{_main_8cpp_a4235252a1a42b0461cd609161da83647}} 
+\index{Main.cpp@{Main.cpp}!runXLoop@{runXLoop}}
+\index{runXLoop@{runXLoop}!Main.cpp@{Main.cpp}}
+\doxysubsubsection{\texorpdfstring{runXLoop()}{runXLoop()}}
+{\footnotesize\ttfamily void run\+XLoop (\begin{DoxyParamCaption}\item[{int}]{y,  }\item[{int}]{img\+Width,  }\item[{int}]{img\+Height,  }\item[{vec4 $\ast$}]{frame\+Buff,  }\item[{atomic$<$ int $>$ \&}]{done }\end{DoxyParamCaption})}
+
+
+
+Thread callback function for rendering a single row of pixels. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em y} & Index of row to render \\
+\hline
+{\em img\+Width} & Width of the texture image \\
+\hline
+{\em img\+Height} & Height of the texture image \\
+\hline
+{\em frame\+Buff} & Pointer to the vec4 frame\+Buffer for storing the colors \\
+\hline
+{\em done} & Atomic int to track the number of pixels rendered \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{_main_8cpp_ac77a629e8d102a92c76c197e5292cd86}\label{_main_8cpp_ac77a629e8d102a92c76c197e5292cd86}} 
+\index{Main.cpp@{Main.cpp}!shdrSrc@{shdrSrc}}
+\index{shdrSrc@{shdrSrc}!Main.cpp@{Main.cpp}}
+\doxysubsubsection{\texorpdfstring{shdrSrc()}{shdrSrc()}}
+{\footnotesize\ttfamily string shdr\+Src (\begin{DoxyParamCaption}\item[{string}]{path }\end{DoxyParamCaption})}
+
+
+
+Reads the given file for GLSL Shader code. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em path} & \mbox{\hyperlink{struct_path}{Path}} of the GLSL file \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+string Source code read from the file 
+\end{DoxyReturn}

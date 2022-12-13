@@ -1,5 +1,16 @@
 #pragma once
 
+/**
+ * @file MltPixel.hpp
+ * @author
+ * @brief Contains the data structures and shader invocation functions
+ * @version 0.1
+ * @date 2022-12-14
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
+
 #include <atomic>
 #include <list>
 #include <random>
@@ -18,6 +29,10 @@
 #define mat3 glm::highp_f32mat3
 #define mat4 glm::highp_f32mat4
 
+/**
+ * @brief Struct for a single Ray
+ * 
+ */
 struct Ray
 {
 	vec3 dir;
@@ -25,6 +40,10 @@ struct Ray
 	vec3 org;
 };
 
+/**
+ * @brief Struct for a single hit by a Ray on any surface
+ * 
+ */
 struct RayHit
 {
 	double dist;
@@ -37,6 +56,10 @@ struct RayHit
 	vec3 specular;
 };
 
+/**
+ * @brief Struct containing a single node of a Path
+ * 
+ */
 struct PathNode
 {
 	RayHit hit;
@@ -46,11 +69,19 @@ struct PathNode
 	int nextM;
 };
 
+/**
+ * @brief Struct containing a single Path
+ * 
+ */
 struct Path 
 {
 	PathNode nodes[NUM_HITS];
 };
 
+/**
+ * @brief Struct containing a single Sphere surface
+ * 
+ */
 struct Sph
 {
 	vec3 pos;
@@ -63,6 +94,10 @@ struct Sph
 	{}
 };
 
+/**
+ * @brief Custom vec4 for which we define <operator to store vec4 in std::set
+ * 
+ */
 struct mvec4 
 {
 	vec4 colour;
@@ -70,6 +105,23 @@ struct mvec4
 	{}
 };
 
+/**
+ * @brief Shoots the ray and returns the ray hit point.
+ * 
+ * @param ray Ray to be shot
+ * @return RayHit Point which the Ray hits
+ */
 RayHit Trc(Ray ray);
+
+/**
+ * @brief Updates the ray based on the ray hit for the next raycast by random sampling
+ * the given distribution and returns the color for the given ray and ray hit.
+ * 
+ * @param ray Ray to be updated
+ * @param hit RayHit to be used for updating the ray
+ * @param e2 Random Generating Engine
+ * @param dist Random Distribution
+ * @return vec3 Color result for the given ray and ray hit.
+ */
 vec3 Shd(Ray& ray, RayHit hit, std::mt19937& e2, std::uniform_real_distribution<double>& dist);
 void drawPixel(int x, int y, int imgWid, int imgHt, vec4* frmBuff, std::atomic<int>& done);
