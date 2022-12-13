@@ -213,7 +213,7 @@ int main()
         "skybox/b.png"
     };
     unsigned int cubemapTex = loadCubemap(faces);
-    float iter = 0.0f, aperture[4] = {0.0f, 0.0f, 10.0f, 1.0f}, seed = 0.5f, float color = 0, dc = 0.01;
+    float iter = 0.0f, aperture[4] = {0.0f, 0.0f, 10.0f, 1.0f}, seed = 0.5f, dc = 0.01;
     vec4* frameBuff = new vec4[texWid*texHt];
     while (!glfwWindowShouldClose(window))
     {
