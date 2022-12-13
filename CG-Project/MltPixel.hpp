@@ -41,7 +41,7 @@ struct PathNode
 {
 	RayHit hit;
 	Ray ray;
-	vec3 result;
+	vec3 rslt;
 	int nextA;
 	int nextM;
 };

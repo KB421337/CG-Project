@@ -3,6 +3,8 @@
 
 #include "MltPixel.hpp"
 
+using namespace std;
+
 RayHit CreateRayHit()
 {
 	RayHit hit;
@@ -18,7 +20,7 @@ RayHit CreateRayHit()
 }
 
 /* Generating random float between [ 0.0, 1.0 ) */
-float randfloat(std::mt19937& e2, std::uniform_real_distribution<float>& dist)
+float randfloat(mt19937& e2, uniform_real_distribution<float>& dist)
 {
 	return dist(e2);
 }
@@ -54,10 +56,10 @@ mat3 GetTgnSpace(vec3 norm)
 }
 
 /* Sampling the hemisphere around the given normal and biases it based on the given alpha */
-vec3 SampleHemi(vec3 norm, float alpha, std::mt19937& e2, std::uniform_real_distribution<float>& dist)
+vec3 SampleHemi(vec3 norm, float alpha, mt19937& e2, uniform_real_distribution<float>& dist)
 {
 	float cosTheta = pow(randfloat(e2, dist), 1.0/(alpha + 1.0));
-	float sinTheta = sqrt(std::max(0.0, 1.0 - cosTheta*cosTheta));
+	float sinTheta = sqrt(max(0.0, 1.0 - cosTheta*cosTheta));
 	float phi = 2*3.141593*randfloat(e2, dist);
 	vec3 tgnSpaceDir = vec3(cos(phi)*sinTheta, sin(phi)*sinTheta, cosTheta);
 	return GetTgnSpace(norm)*tgnSpaceDir;
@@ -389,12 +391,10 @@ RayHit Trace(Ray ray)
 	RayHit bestHit = CreateRayHit();
 	intersectRoom(ray, bestHit);
 	intersectGroundPlane(ray, bestHit);
-	//intersectSph(ray, bestHit, Sph(vec3(-17.0f, -9.0, -62.0f), 7.0, vec3(0.0), vec3(1.0, 0.78f, 0.34f), 1.0, vec3(1.0)));
 	intersectSph(ray, bestHit, Sph(vec3(-15.0f, -12.6, -30.0f), 4.0, vec3(0.0), vec3(1.0, 1.0f, 1.0f), 1.2, vec3(0.0)));
-	intersectSph(ray, bestHit, Sph(vec3(17.0f, -7.0, -45.0f), 3.0, vec3(1.0), vec3(0.1), 0.8, vec3(0.0, 10.0, 10.0)));
 	intersectSph(ray, bestHit, Sph(vec3(-3.0f, -9.6, -75.0f), 7.0, vec3(0.0, 0.0, 0.0), vec3(1.0, 0.35, 0.45), 0.1, vec3(0.0)));
 	intersectSph(ray, bestHit, Sph(vec3(1.0f, -14.6, -62.0f), 2.0, vec3(0.0, 0.0, 0.0), vec3(1.0, 1.0, 1.0), 0.0, vec3(0.0)));
-	//intersectSph(ray, bestHit, Sph(vec3(8.0f, -11.0, -50.0f), 5.0, vec3(0.0, 0.0, 0.0), vec3(1.0, 1.0, 0.0), 0.8, vec3(1.0)));
+	intersectSph(ray, bestHit, Sph(vec3(17.0f, -7.0, -45.0f), 3.0, vec3(1.0), vec3(0.1), 0.8, vec3(0.0, 10.0, 10.0)));
 
 	vec3 wallEmission = vec3(0);
 	vec3 wallSpecular = vec3(0.1);
@@ -413,7 +413,7 @@ RayHit Trace(Ray ray)
 			bestHit.pos = ray.org + t*ray.dir;
 			bestHit.norm = normalize(cross(v1 - v0, v2 - v0));
 			bestHit.albedo = wallAlbedo;
-			bestHit.specular = wallSpecular;//0.65f*vec3(1, 0.4f, 0.2f);
+			bestHit.specular = wallSpecular;
 			bestHit.smoothness = wallSmoothness;
 			bestHit.emission = wallEmission;
 			bestHit.skybox = false;
@@ -431,7 +431,7 @@ RayHit Trace(Ray ray)
 			bestHit.pos = ray.org + t*ray.dir;
 			bestHit.norm = normalize(cross(v1 - v0, v2 - v0));
 			bestHit.albedo = wallAlbedo;
-			bestHit.specular = wallSpecular;//0.65f*vec3(1, 0.4f, 0.2f);
+			bestHit.specular = wallSpecular;
 			bestHit.smoothness = wallSmoothness;
 			bestHit.emission = wallEmission;
 			bestHit.skybox = false;
@@ -449,7 +449,7 @@ RayHit Trace(Ray ray)
 			bestHit.pos = ray.org + t*ray.dir;
 			bestHit.norm = normalize(cross(v1 - v0, v2 - v0));
 			bestHit.albedo = wallAlbedo;
-			bestHit.specular = wallSpecular;//0.65f*vec3(1, 0.4f, 0.2f);
+			bestHit.specular = wallSpecular;
 			bestHit.smoothness = wallSmoothness;
 			bestHit.emission = wallEmission;
 			bestHit.skybox = false;
@@ -467,7 +467,7 @@ RayHit Trace(Ray ray)
 			bestHit.pos = ray.org + t*ray.dir;
 			bestHit.norm = normalize(cross(v1 - v0, v2 - v0));
 			bestHit.albedo = wallAlbedo;
-			bestHit.specular = wallSpecular;//0.65f*vec3(1, 0.4f, 0.2f);
+			bestHit.specular = wallSpecular;
 			bestHit.smoothness = wallSmoothness;
 			bestHit.emission = wallEmission;
 			bestHit.skybox = false;
@@ -485,7 +485,7 @@ RayHit Trace(Ray ray)
 			bestHit.pos = ray.org + t*ray.dir;
 			bestHit.norm = normalize(cross(v1 - v0, v2 - v0));
 			bestHit.albedo = wallAlbedo;
-			bestHit.specular = wallSpecular;//0.65f*vec3(1, 0.4f, 0.2f);
+			bestHit.specular = wallSpecular;
 			bestHit.smoothness = wallSmoothness;
 			bestHit.emission = wallEmission;
 			bestHit.skybox = false;
@@ -503,7 +503,7 @@ RayHit Trace(Ray ray)
 			bestHit.pos = ray.org + t*ray.dir;
 			bestHit.norm = normalize(cross(v1 - v0, v2 - v0));
 			bestHit.albedo = wallAlbedo;
-			bestHit.specular = wallSpecular;//0.65f*vec3(1, 0.4f, 0.2f);
+			bestHit.specular = wallSpecular;
 			bestHit.smoothness = wallSmoothness;
 			bestHit.emission = wallEmission;
 			bestHit.skybox = false;
@@ -521,7 +521,7 @@ RayHit Trace(Ray ray)
 			bestHit.pos = ray.org + t*ray.dir;
 			bestHit.norm = normalize(cross(v1 - v0, v2 - v0));
 			bestHit.albedo = wallAlbedo;
-			bestHit.specular = wallSpecular;//0.65f*vec3(1, 0.4f, 0.2f);
+			bestHit.specular = wallSpecular;
 			bestHit.smoothness = wallSmoothness;
 			bestHit.emission = wallEmission;
 			bestHit.skybox = false;
@@ -539,7 +539,7 @@ RayHit Trace(Ray ray)
 			bestHit.pos = ray.org + t*ray.dir;
 			bestHit.norm = normalize(cross(v1 - v0, v2 - v0));
 			bestHit.albedo = wallAlbedo;
-			bestHit.specular = wallSpecular;//0.65f*vec3(1, 0.4f, 0.2f);
+			bestHit.specular = wallSpecular;
 			bestHit.smoothness = wallSmoothness;
 			bestHit.emission = wallEmission;
 			bestHit.skybox = false;
@@ -557,7 +557,7 @@ RayHit Trace(Ray ray)
 			bestHit.pos = ray.org + t*ray.dir;
 			bestHit.norm = normalize(cross(v1 - v0, v2 - v0));
 			bestHit.albedo = wallAlbedo;
-			bestHit.specular = wallSpecular;//0.65f*vec3(1, 0.4f, 0.2f);
+			bestHit.specular = wallSpecular;
 			bestHit.smoothness = wallSmoothness;
 			bestHit.emission = wallEmission;
 			bestHit.skybox = false;
@@ -575,7 +575,7 @@ RayHit Trace(Ray ray)
 			bestHit.pos = ray.org + t*ray.dir;
 			bestHit.norm = normalize(cross(v1 - v0, v2 - v0));
 			bestHit.albedo = wallAlbedo;
-			bestHit.specular = wallSpecular;//0.65f*vec3(1, 0.4f, 0.2f);
+			bestHit.specular = wallSpecular;
 			bestHit.smoothness = wallSmoothness;
 			bestHit.emission = wallEmission;
 			bestHit.skybox = false;
@@ -593,7 +593,7 @@ RayHit Trace(Ray ray)
 			bestHit.pos = ray.org + t*ray.dir;
 			bestHit.norm = normalize(cross(v1 - v0, v2 - v0));
 			bestHit.albedo = wallAlbedo;
-			bestHit.specular = wallSpecular;//0.65f*vec3(1, 0.4f, 0.2f);
+			bestHit.specular = wallSpecular;
 			bestHit.smoothness = wallSmoothness;
 			bestHit.emission = wallEmission;
 			bestHit.skybox = false;
@@ -611,7 +611,7 @@ RayHit Trace(Ray ray)
 			bestHit.pos = ray.org + t*ray.dir;
 			bestHit.norm = normalize(cross(v1 - v0, v2 - v0));
 			bestHit.albedo = wallAlbedo;
-			bestHit.specular = wallSpecular;//0.65f*vec3(1, 0.4f, 0.2f);
+			bestHit.specular = wallSpecular;
 			bestHit.smoothness = wallSmoothness;
 			bestHit.emission = wallEmission;
 			bestHit.skybox = false;
@@ -629,7 +629,7 @@ RayHit Trace(Ray ray)
 			bestHit.pos = ray.org + t*ray.dir;
 			bestHit.norm = normalize(cross(v1 - v0, v2 - v0));
 			bestHit.albedo = wallAlbedo;
-			bestHit.specular = wallSpecular;//0.65f*vec3(1, 0.4f, 0.2f);
+			bestHit.specular = wallSpecular;
 			bestHit.smoothness = wallSmoothness;
 			bestHit.emission = wallEmission;
 			bestHit.skybox = false;
@@ -647,7 +647,7 @@ RayHit Trace(Ray ray)
 			bestHit.pos = ray.org + t*ray.dir;
 			bestHit.norm = normalize(cross(v1 - v0, v2 - v0));
 			bestHit.albedo = wallAlbedo;
-			bestHit.specular = wallSpecular;//0.65f*vec3(1, 0.4f, 0.2f);
+			bestHit.specular = wallSpecular;
 			bestHit.smoothness = wallSmoothness;
 			bestHit.emission = wallEmission;
 			bestHit.skybox = false;
@@ -657,14 +657,14 @@ RayHit Trace(Ray ray)
 	return bestHit;
 }
 
-float getPss(std::list<float>& pssv) {
+float getPss(list<float>& pssv) {
 	float toret = pssv.front();
 	pssv.pop_front();
 	return toret;
 }
 
 /* Driver colouring function to colours pixels based on hit properties, and then modify the ray to denote the new reflection dir */
-vec3 Shade(Ray& ray, RayHit hit, std::mt19937& e2, std::uniform_real_distribution<float>& dist)
+vec3 Shade(Ray& ray, RayHit hit, mt19937& e2, uniform_real_distribution<float>& dist)
 {
 	if (hit.dist > 0.01)
 	{
@@ -706,7 +706,7 @@ vec3 Shade(Ray& ray, RayHit hit, std::mt19937& e2, std::uniform_real_distributio
 	}
 }
 
-int getLd(int xl, std::mt19937& e2, std::normal_distribution<float>& dist)
+int getLd(int xl, mt19937& e2, normal_distribution<float>& dist)
 {
 	return dist(e2);
 }
@@ -721,33 +721,28 @@ float luminance(vec3 colour)
 	return 0.299*colour.x + 0.587*colour.y + 0.114*colour.z;
 }
 
-void traceAndShadePath(Ray &ray, vec3& result, int nodes, std::mt19937& e2, std::uniform_real_distribution<float>& dist, std::list<float>& pssv) {
+void traceAndShadePath(Ray &ray, vec3& rslt, int nodes, mt19937& e2, uniform_real_distribution<float>& dist, list<float>& pssv)
+{
 	for (int i = 1; i < nodes; i++) {
 		RayHit hit = Trace(ray);
-		result += ray.nrg*Shade(ray, hit, e2, dist);
+		rslt += ray.nrg*Shade(ray, hit, e2, dist);
 	}
 }
 
-/* Function to loop through all pixels and fill them with a colour */
-void drawPixel(int x, int y, int imgWidth, int imgHeight, vec4* frameBuffer, std::atomic<int>& done)
+/* Looping through all pixels and filling them with a colour */
+void drawPixel(int x, int y, int imgWidth, int imgHeight, vec4* frameBuffer, atomic<int>& done)
 {
-	std::random_device rd;
-	std::mt19937 e2(rd());
-	std::uniform_real_distribution<float> dist(0, 1);
+	random_device rd;
+	mt19937 e2(rd());
+	uniform_real_distribution<float> dist(0, 1);
 	vec4 pix;
-	//internalSeed = 0;
 	ivec2 pixCoords = ivec2(x, y), dims = ivec2(imgWidth, imgHeight);
 	float maxx = 5.0, maxy = 5.0, xD = float(pixCoords.x*2 - dims.x)/dims.x, yD = float(pixCoords.y*2 - dims.y)/dims.y;
-
-	int nSamples = SAMPLES;
-	int lenX = 0;
-	vec3 result = vec3(0.0, 0.0, 0.0);
-	bool flag = false;
-
 	float xOrg = 1, yOrg = 2;
-
-	Path px;
-	Path py;
+	int nSamples = SAMPLES, lenX = 0;
+	vec3 rslt = vec3(0.0, 0.0, 0.0);
+	bool flag = false;
+	Path px, py;
 	
 	for (int j = 0; j < nSamples; j++)
 	{
@@ -758,20 +753,15 @@ void drawPixel(int x, int y, int imgWidth, int imgHeight, vec4* frameBuffer, std
 		vec4 initial = vec4(normalize(vec3(xD*maxx, yD*maxy, 0.0) - ray.org), 1.0);
 		ray.dir = vec3((initial));
 		ray.nrg = vec3(1.0f);
-
 		int lenX = 0;
-
 		for (int i = 1; i <= numHits; i++)
 		{
 			RayHit hit = Trace(ray);
-			result += ray.nrg*Shade(ray, hit, e2, dist);
-
+			rslt += ray.nrg*Shade(ray, hit, e2, dist);
 			px.nodes[i - 1].hit = hit;
 			px.nodes[i - 1].ray = ray;
-			px.nodes[i - 1].result = result;
-
+			px.nodes[i - 1].rslt = rslt;
 			lenX++;
-
 			if (ray.nrg.x == 0.0 && ray.nrg.y == 0.0 && ray.nrg.z == 0.0)
 				break;
 		}
@@ -780,8 +770,8 @@ void drawPixel(int x, int y, int imgWidth, int imgHeight, vec4* frameBuffer, std
 
 		/*
 		Sample Length of Camera Path
-		lastLightPathVertex and Result
-		lastCameraPathVertex and Result
+		lastLightPathVertex and Rslt
+		lastCameraPathVertex and Rslt
 		Check if unobstructed
 		if yes, combine, else reject.
 		*/
@@ -797,75 +787,57 @@ void drawPixel(int x, int y, int imgWidth, int imgHeight, vec4* frameBuffer, std
 
 	}
 
-	result /= nSamples;
-
-	float luminanceX = luminance(result);
-	vec3 colourX = result/luminanceX;
-
-	vec3 mutateResult = vec3(0);
-	mutateResult += colourX;
-
-	std::list<float> dummy;
-
+	rslt /= nSamples;
+	float luminanceX = luminance(rslt);
+	vec3 colourX = rslt/luminanceX;
+	vec3 mutRslt = vec3(0);
+	mutRslt += colourX;
+	list<float> dummy;
 	float stddev = 1;
-	std::normal_distribution<float> ldDist(numHits/2, stddev);
+	normal_distribution<float> ldDist(numHits/2, stddev);
 
-	for (int j = 0; j < mutations; j++) {
+	for (int j = 0; j < mutations; j++)
+	{
 		int lenY = lenX;
-
 		int ld = getLd(lenY, e2, ldDist);
-		if (ld > 0) {
+		if (ld > 0)
+		{
 			ld = ld < (lenX - 1) ? ld : (lenX - 1);
 			lenY -= ld;
-
-			for (int i = 0; i < lenY; i++) py.nodes[i] = px.nodes[i];
-
+			for (int i = 0; i < lenY; i++)
+				py.nodes[i] = px.nodes[i];
 			int redLen = lenY;
-
 			Ray ray = py.nodes[lenY - 1].ray;
-			vec3 result = py.nodes[lenY - 1].result;
-			
-			for (int i = redLen + 1; i <= numHits; i++) {
+			vec3 rslt = py.nodes[lenY - 1].rslt;		
+			for (int i = redLen + 1; i <= numHits; i++)
+			{
 				RayHit hit = Trace(ray);
-				result += ray.nrg*Shade(ray, hit, e2, dist);
-
+				rslt += ray.nrg*Shade(ray, hit, e2, dist);
 				py.nodes[i - 1].ray = ray;
 				py.nodes[i - 1].hit = hit;
-				py.nodes[i - 1].result = result;
-
+				py.nodes[i - 1].rslt = rslt;
 				lenY++;
 			}
-
-			float luminanceY = luminance(result);
-			vec3 colourY = result/luminanceY;
-
-			float axy = std::min(1.0f, luminanceY/luminanceX);
-
-			mutateResult += axy*colourX + (1 - axy)*colourY;
-
-			if (randfloat(e2, dist) < axy) {
+			float luminanceY = luminance(rslt);
+			vec3 colourY = rslt/luminanceY;
+			float axy = min(1.0f, luminanceY/luminanceX);
+			mutRslt += axy*colourX + (1 - axy)*colourY;
+			if (randfloat(e2, dist) < axy)
+			{
 				px = py;
 				colourX = colourY;
 				luminanceX = luminanceY;
 				lenX = lenY;
 			}
 		}
-		else {
-			mutateResult += colourX;
-		}
+		else
+			mutRslt += colourX;
 	}
-
-	mutateResult /= (mutations + 1.0);
-
-	if (mutations > 0) {
-		pix = vec4(mutateResult.r, mutateResult.g, mutateResult.b, 1.0);
-	}
-	else {
-		pix = vec4(result.r, result.g, result.b, 1.0);
-	}
-	
-	// if (isnan(pix.r) || isnan(pix.g) || isnan(pix.b)) __debugbreak();
-
+	mutRslt /= (mutations + 1.0);
+	if (mutations > 0)
+		pix = vec4(mutRslt.r, mutRslt.g, mutRslt.b, 1.0);
+	else
+		pix = vec4(rslt.r, rslt.g, rslt.b, 1.0);
 	frameBuffer[y*imgWidth + x] = pix;
 	done++;
 }
