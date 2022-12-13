@@ -4,10 +4,11 @@
 #include <atomic>
 #include <random>
 #include <set>
+#include <list>
 
 #define NUM_HITS 10
-#define SAMPLES 30
-#define MUTATIONS 0
+#define SAMPLES 1
+#define MUTATIONS 100
 
 #define ivec2 glm::ivec2
 #define vec2 glm::highp_f32vec2

@@ -405,13 +405,13 @@ RayHit Trace(Ray ray)
 	intersectGroundPlane(ray, bestHit);
 	//intersectSphere(ray, bestHit, Sphere(vec3(-17.0f, -9.0, -62.0f), 7.0, vec3(0.0), vec3(1.0, 0.78f, 0.34f), 1.0, vec3(1.0)));
 	intersectSphere(ray, bestHit, Sphere(vec3(-15.0f, -12.6, -30.0f), 4.0, vec3(0.0), vec3(1.0, 1.0f, 1.0f), 1.2, vec3(0.0)));
-	intersectSphere(ray, bestHit, Sphere(vec3(17.0f, -7.0, -45.0f), 3.0, vec3(1.0, 1.0, 1.0), vec3(1.0), 0.8, vec3(0.0, 10.0, 10.0)));
+	intersectSphere(ray, bestHit, Sphere(vec3(17.0f, -7.0, -45.0f), 3.0, vec3(1.0), vec3(0.1), 0.8, vec3(0.0, 10.0, 10.0)));
 	intersectSphere(ray, bestHit, Sphere(vec3(-3.0f, -9.6, -75.0f), 7.0, vec3(0.0, 0.0, 0.0), vec3(1.0, 0.35, 0.45), 0.1, vec3(0.0)));
 	intersectSphere(ray, bestHit, Sphere(vec3(1.0f, -14.6, -62.0f), 2.0, vec3(0.0, 0.0, 0.0), vec3(1.0, 1.0, 1.0), 0.0, vec3(0.0)));
 	//intersectSphere(ray, bestHit, Sphere(vec3(8.0f, -11.0, -50.0f), 5.0, vec3(0.0, 0.0, 0.0), vec3(1.0, 1.0, 0.0), 0.8, vec3(1.0)));
 
 	vec3 wallEmission = vec3(0);
-	vec3 wallSpecular = vec3(0.5);
+	vec3 wallSpecular = vec3(0.1);
 	vec3 wallAlbedo = vec3(1);
 	float wallSmoothness = 1;
 
@@ -671,6 +671,12 @@ RayHit Trace(Ray ray)
 	return bestHit;
 }
 
+float getPss(std::list<float>& pssv) {
+	float toret = pssv.front();
+	pssv.pop_front();
+	return toret;
+}
+
 /* Driver colouring function to colours pixels based on hit properties, and then modify the ray to denote the new reflection dir */
 vec3 Shade(Ray& ray, RayHit hit, std::mt19937& e2, std::uniform_real_distribution<float>& dist)
 {
@@ -682,7 +688,9 @@ vec3 Shade(Ray& ray, RayHit hit, std::mt19937& e2, std::uniform_real_distributio
 			return hit.emission;
 		}
 		hit.albedo = min(1.0f - hit.specular, hit.albedo);
+
 		float specProb = nrg(hit.specular), diffProb = nrg(hit.albedo), roulette = randfloat(e2, dist);
+
 		float sum = specProb + diffProb;
 		specProb /= sum;
 		diffProb /= sum;
@@ -712,33 +720,10 @@ vec3 Shade(Ray& ray, RayHit hit, std::mt19937& e2, std::uniform_real_distributio
 	}
 }
 
-/*
-float pd(int xl,  int ld)
+int getLd(int xl, std::mt19937& e2, std::normal_distribution<float>& dist)
 {
-	if (ld >= 4 || ld <= 0)
-		return 0;
-
-	if (ld != 2)
-		return 0.25;
-
-	return 0.5;
-}*/
-
-int getLd(int xl, std::mt19937& e2, std::uniform_real_distribution<float>& dist)
-{
-	if (xl < 3)
-		return 0;
-	float d = randfloat(e2, dist);
-	if (d <= 0.25)
-		return 1;
-	if (d <= 0.75)
-		return 2;
-	return int(floor(3 - log2(1 - 4 * (d - 0.75))));
+	return dist(e2);
 }
-
-// 10, 100, 0 converges after 50 frames. Took 7 minutes
-
-//PathNode nodePool[NUM_HITS*(MUTATIONS + SAMPLES) + 1];
 
 /* Assuming tentative transition function is symmetric. */
 
@@ -748,6 +733,13 @@ const int numHits = NUM_HITS;
 float luminance(vec3 color)
 {
 	return 0.299 * color.x + 0.587 * color.y + 0.114 * color.z;
+}
+
+void traceAndShadePath(Ray &ray, vec3& result, int nodes, std::mt19937& e2, std::uniform_real_distribution<float>& dist, std::list<float>& pssv) {
+	for (int i = 1; i < nodes; i++) {
+		RayHit hit = Trace(ray);
+		result += ray.nrg * Shade(ray, hit, e2, dist);
+	}
 }
 
 /* Function to loop through all pixels and fill them with a colour */
@@ -773,20 +765,19 @@ void drawPixel(int x, int y, int imgWidth, int imgHeight, vec4* frameBuffer, std
 	
 	for (int j = 0; j < nSamples; j++)
 	{
+
+#ifndef BIDIR
 		Ray ray;
 		ray.org = vec3(xOrg, yOrg, 10.0);
 		vec4 initial = vec4(normalize(vec3(xD * maxx, yD * maxy, 0.0) - ray.org), 1.0);
 		ray.dir = vec3((initial));
 		ray.nrg = vec3(1.0f);
 
-		lenX = 0;
+		int lenX = 0;
 
 		for (int i = 1; i <= numHits; i++)
 		{
-			Ray oldRay = ray;
 			RayHit hit = Trace(ray);
-			Ray oldRay2 = ray;
-			RayHit oldHit = hit;
 			result += ray.nrg * Shade(ray, hit, e2, dist);
 
 			px.nodes[i - 1].hit = hit;
@@ -798,21 +789,45 @@ void drawPixel(int x, int y, int imgWidth, int imgHeight, vec4* frameBuffer, std
 			if (ray.nrg.x == 0.0 && ray.nrg.y == 0.0 && ray.nrg.z == 0.0)
 				break;
 		}
+
+#else
+
+		/*
+		Sample Length of Camera Path
+		lastLightPathVertex and Result
+		lastCameraPathVertex and Result
+		Check if unobstructed
+		if yes, combine, else reject.
+		*/
+
+		// number of nodes = numHits + 1
+		// cameraPathNodes max and min numHits - 1, 2
+		int cameraPathNodes = randFloat() * (numHits - 3);
+		cameraPathNodes++;
+		int lightPathNodes = numHits + 1 - cameraPathNodes;
+
+
+#endif
+
 	}
 
 	result /= nSamples;
 
-	vec3 colorX = result;
-	float luminanceX = luminance(colorX);
+	float luminanceX = luminance(result);
+	vec3 colorX = result / luminanceX;
 
 	vec3 mutateResult = vec3(0);
 	mutateResult += colorX;
 
-	for (int j = 0; j < mutations; j++) {
+	std::list<float> dummy;
 
+	float stddev = 1;
+	std::normal_distribution<float> ldDist(numHits/2, stddev);
+
+	for (int j = 0; j < mutations; j++) {
 		int lenY = lenX;
 
-		int ld = getLd(lenY, e2, dist);
+		int ld = getLd(lenY, e2, ldDist);
 		if (ld > 0) {
 			ld = ld < (lenX - 1) ? ld : (lenX - 1);
 			lenY -= ld;
@@ -833,14 +848,10 @@ void drawPixel(int x, int y, int imgWidth, int imgHeight, vec4* frameBuffer, std
 				py.nodes[i - 1].result = result;
 
 				lenY++;
-
-				if (ray.nrg.x == 0.0 && ray.nrg.y == 0.0 && ray.nrg.z == 0.0)
-					break;
 			}
-			
 
 			float luminanceY = luminance(result);
-			vec3 colorY = result;
+			vec3 colorY = result/luminanceY;
 
 			float axy = std::min(1.0f, luminanceY / luminanceX);
 
@@ -852,7 +863,6 @@ void drawPixel(int x, int y, int imgWidth, int imgHeight, vec4* frameBuffer, std
 				luminanceX = luminanceY;
 				lenX = lenY;
 			}
-			
 		}
 		else {
 			mutateResult += colorX;
