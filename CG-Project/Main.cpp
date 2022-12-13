@@ -86,9 +86,9 @@ unsigned int loadCubemap(vector<string> faces)
     return texId;
 }
 
-void runXLoop(int y, int imgWidth, int imgHeight, vec4* frameBuffer, std::atomic<int>& done) {
+void runXLoop(int y, int imgWidth, int imgHeight, vec4* frameBuffer, std::atomic<int>& done, std::set<mvec4>& colors) {
     for (int x = 0; x < imgWidth; x++) {
-        drawPixel(x, y, imgWidth, imgHeight, frameBuffer, done);
+        drawPixel(x, y, imgWidth, imgHeight, frameBuffer, done, colors);
     }
 }
 
@@ -267,7 +267,7 @@ int main()
 
     //////////////////////
     float iter = 0.0f;
-    glm::mat4 rot_mat = glm::mat4(1.0f);
+    mat4 rot_mat = mat4(1.0f);
     ////////////////////////
 
     // change in the shader2 as well
@@ -318,15 +318,20 @@ int main()
         glFinish();
 
         std::atomic<int> done{0};
+        std::set<mvec4> colors;
 
         for (int y = 0; y < texHt; y++) {
-            std::thread(runXLoop, y, texWid, texHt, frameBuffer, std::ref(done)).detach();
+            std::thread(runXLoop, y, texWid, texHt, frameBuffer, std::ref(done), std::ref(colors)).detach();
 
             cout << y << " ";
         }
 
         while (done != texWid * texHt) {
             cout << done << " ";
+        }
+
+        for (const mvec4 m : colors) {
+            cout << m.color.r << "," << m.color.g << "," << m.color.b << " ";
         }
 
         glUseProgram(vnfProg);
