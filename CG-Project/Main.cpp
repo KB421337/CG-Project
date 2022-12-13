@@ -11,6 +11,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <thread>
 #include <windows.h>
 
 #include <glad/glad.h>
@@ -20,6 +21,8 @@
 #include "glm/gtx/string_cast.hpp"
 #include "glm/gtc/type_ptr.hpp"
 #include "stb_image.h"
+
+#include "MltPixel.hpp"
 
 #ifdef _MSC_VER
 #define ASSERT(x) if (!(x)) __debugbreak();
@@ -48,10 +51,10 @@ bool GlLogCall(const char* func, const char* file, int line)
 string shdrSrc(string path)
 {
     ifstream f(path);
-    stringstream buffer;
-    buffer << f.rdbuf();
+    stringstream buff;
+    buff << f.rdbuf();
     f.close();
-    string s = buffer.str();
+    string s = buff.str();
     return s;
 }
 
@@ -83,15 +86,18 @@ unsigned int loadCubemap(vector<string> faces)
     return texId;
 }
 
+void runXLoop(int y, int imgWidth, int imgHeight, vec4* frameBuff, atomic<int>& done)
+{
+    for (int x = 0; x < imgWidth; x++) {
+        drawPixel(x, y, imgWidth, imgHeight, frameBuff, done);
+    }
+}
+
 int main()
 {
     GLFWwindow* window;
-
-    /* Initializing the library */
     if (!glfwInit())
         return -1;
-
-    /* Creating a windowed mode window and its OpenGL context */
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
     window = glfwCreateWindow(900, 900, "Metropolis Light Transport", NULL, NULL);
     if (!window)
@@ -99,19 +105,14 @@ int main()
         glfwTerminate();
         return -1;
     }
-
-    /* Making the window's context current */
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
-
-    /* Checking if GLAD initialized successfully */
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) 
     {
 		cout << "GLAD failed to initialize successfully!! \n";
 		return -1;
 	}
-
-    int texWid = 900, texHt = 900;
+    const int texWid = 900, texHt = 900;
     GLuint texOut;
     glGenTextures(1, &texOut);
     glActiveTexture(GL_TEXTURE0);
@@ -121,22 +122,17 @@ int main()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, texWid, texHt, 0, GL_RGBA, GL_FLOAT, NULL);
-    glBindImageTexture(0, texOut, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
-
+    glBindImageTexture(GL_TEXTURE0, texOut, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
     glBindTexture(GL_TEXTURE_2D, 0);
-
     int wrkGrpCnt[3], wrkGrpInv;
     for (int i = 0; i < 3; i++) 
         glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, i, &wrkGrpCnt[i]);
     cout << "Global work group counts x:" << wrkGrpCnt[0] << " y: " << wrkGrpCnt[1] << " z: " <<  wrkGrpCnt[2] << "\n";
     glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &wrkGrpInv);
     cout << "Local work group invocations: " << wrkGrpInv << "\n";
-
     int success;
     char infoLog[512];
-    string shaderSrc;
-
-    shaderSrc = shdrSrc("shader.vert");
+    string shaderSrc = shdrSrc("shader.vert");
     const char* vertSrc = shaderSrc.c_str();
     GLuint vertShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertShader, 1, &vertSrc, NULL);
@@ -148,7 +144,6 @@ int main()
         glGetShaderInfoLog(vertShader, 512, NULL, infoLog);
         cout << infoLog << "\n";
     }
-
     shaderSrc = shdrSrc("shader.frag");
     const char* fragSrc = shaderSrc.c_str();
     GLuint fragShader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -161,23 +156,6 @@ int main()
         glGetShaderInfoLog(fragShader, 512, NULL, infoLog);
         cout << infoLog << "\n";
     }
-
-    shaderSrc = shdrSrc("shader2.glsl");
-    const char* computeSrc = shaderSrc.c_str();
-    GLuint computeShader = glCreateShader(GL_COMPUTE_SHADER);
-    glShaderSource(computeShader, 1, &computeSrc, NULL);
-    GlCall(glCompileShader(computeShader));
-    GlCall(glGetShaderiv(computeShader, GL_COMPILE_STATUS, &success));
-    if (!success)
-    {
-        cout << "ERROR: Compute Shader compilation failed!! \n";
-        int len;
-        GlCall(glGetShaderiv(computeShader, GL_INFO_LOG_LENGTH, &len));
-        char* msg = (char*)alloca(sizeof(char)*len);
-        GlCall(glGetShaderInfoLog(computeShader, len, &len, msg));
-        cout << msg << "\n";
-    }
-
     GLuint vnfProg = glCreateProgram();
     glAttachShader(vnfProg, vertShader);
     glAttachShader(vnfProg, fragShader);
@@ -189,22 +167,8 @@ int main()
         glGetProgramInfoLog(vnfProg, 512, NULL, infoLog);
         cout << infoLog << "\n";
     }
-
-    GLuint mltProg = glCreateProgram();
-    glAttachShader(mltProg, computeShader);
-    glLinkProgram(mltProg);
-    glGetProgramiv(mltProg, GL_LINK_STATUS, &success);
-    if (!success)
-    {
-        cout << "ERROR: MLT Shader linking failed!! \n";
-        glGetProgramInfoLog(mltProg, 512, NULL, infoLog);
-        cout << infoLog << "\n";
-    }
-
     glDeleteShader(vertShader);
     glDeleteShader(fragShader);
-    glDeleteShader(computeShader);
-
     float verts[] =
     {
          1,  1,  0,  1,  1,
@@ -224,7 +188,6 @@ int main()
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void*)(3*sizeof(float)));
     glEnableVertexAttribArray(1);
-
     float mesh[] =
     {
         1, 1, 0, 0,
@@ -240,7 +203,6 @@ int main()
     glBufferData(GL_UNIFORM_BUFFER, sizeof(mesh), NULL, GL_STATIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
     glBindBufferBase(GL_UNIFORM_BUFFER, 0, meshBlock);
-
     vector<string> faces
     {
         "skybox/r.png",
@@ -251,90 +213,46 @@ int main()
         "skybox/b.png"
     };
     unsigned int cubemapTex = loadCubemap(faces);
-
-    //////////////////////
-    float iter = 0.0f;
-    glm::mat4 rot_mat = glm::mat4(1.0f);
-    ////////////////////////
-
-#define NUM_HITS 10
-#define SAMPLES 28
-#define MUTATIONS 0
-
-    // change in the shader2 as well
-    // int bufferSize = (NUM_HITS * (MUTATIONS*5 + SAMPLES) + 1) * 200; // 200 approx size of PathNode
-    // GLuint* buffer = new GLuint[bufferSize / sizeof(GLuint)];
-
-    // GLuint ssboId;
-    // glUseProgram(mltProg);
-    // glGenBuffers(1, &ssboId);
-    // glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboId);
-    // glBufferData(GL_SHADER_STORAGE_BUFFER, bufferSize, buffer, GL_STATIC_DRAW);
-    // glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssboId);
-    // glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
-    float aperture[4] = {0.0f, 0.0f, 10.0f, 1.0f}, seed = 0.5f;
-    rot_mat = glm::rotate(rot_mat, glm::radians(5.0f), glm::vec3(0.0, 1.0, 0.0));
-
-    /* Looping until the user closes the window */
+    float iter = 0.0f, aperture[4] = {0.0f, 0.0f, 10.0f, 1.0f}, seed = 0.5f, float color = 0, dc = 0.01;
+    vec4* frameBuff = new vec4[texWid*texHt];
     while (!glfwWindowShouldClose(window))
     {
-        glUseProgram(mltProg);
-
-        int sizeLoc = glGetUniformLocation(mltProg, "size");
-        int seedLoc = glGetUniformLocation(mltProg, "seed");
-        glUniform1f(seedLoc, seed);
-        seed += 3.1415f;
-        int apertureLoc = glGetUniformLocation(mltProg, "aperture");
-        glUniform4fv(apertureLoc, 1, aperture);
-
-        int rotLoc = glGetUniformLocation(mltProg, "rotMat");
-        glUniformMatrix4fv(rotLoc, 1, GL_FALSE, glm::value_ptr(rot_mat));
-        int xOrgLoc = glGetUniformLocation(mltProg, "xOrg");
-        glUniform1i(xOrgLoc, 0);
-        int yOrgLoc = glGetUniformLocation(mltProg, "yOrg");
-        glUniform1i(yOrgLoc, 2);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTex);
-
-        glDispatchCompute((GLuint)texWid, (GLuint)texHt, 1);
-
-        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-
         glFinish();
-
+        atomic<int> done{0};
+        set<mvec4> colours;
+        for (int y = 0; y < texHt; y++)
+        {
+            thread(runXLoop, y, texWid, texHt, frameBuff, ref(done)).detach();
+            cout << y << " ";
+        }
+        while (done != texWid*texHt)
+        {
+            cout << done << " ";
+        }
+        for (const mvec4 m : colours)
+        {
+            cout << m.colour.r << "," << m.colour.g << "," << m.colour.b << " ";
+        }
         glUseProgram(vnfProg);
         glBindVertexArray(VAO);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texOut);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, texWid, texHt, 0, GL_RGBA, GL_FLOAT, frameBuff);
         int iterLoc = glGetUniformLocation(vnfProg, "iter");
-        glUniform1f(iterLoc, iter);
         iter += 1.0f;
         glEnable(GL_BLEND);
         glBlendEquation(GL_FUNC_ADD);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glDrawArrays(GL_TRIANGLES, 0, 6);
-
         glBindBuffer(GL_UNIFORM_BUFFER, meshBlock);
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(mesh), mesh);
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
         glUseProgram(0);
-
-        /* Swapping front and back buffers */
         glfwSwapBuffers(window);
-
-        /* Polling for and processing events */
         glfwPollEvents();
-
         cout << "Rendered frame " << iter << "\n";
-        //cout.flush();
-
-        /* For comparing MLT to Path Tracing */
-        break;
     }
-
     while (1);
-
     glfwTerminate();
     return 0;
 }

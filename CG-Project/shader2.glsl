@@ -33,6 +33,14 @@ struct RayHit
     vec3 specular;	
 };
 
+struct Path
+{
+	int pathLen;
+	Ray rays[10];
+	RayHit rayhits[10];
+	vec3 results[10];
+};
+
 RayHit CreateRayHit()
 {
     RayHit hit;
@@ -47,7 +55,7 @@ RayHit CreateRayHit()
     return hit;
 }
 
-struct Sphere
+struct Sph
 {
     vec3 pos;
     float rad;
@@ -84,29 +92,29 @@ float SmoothnessToPhongAlpha(float s)
     return pow(1000.0f, s*s);
 }
 
-/* Finding the tangent space given a normal */
-mat3 GetTangentSpace(vec3 norm)
+/* Finding the tgn space given a normal */
+mat3 GetTgnSpace(vec3 norm)
 {
     vec3 helper = vec3(1, 0, 0);
     if (abs(norm.x) > 0.99f)
         helper = vec3(0, 0, 1);    
-    vec3 tangent = normalize(cross(norm, helper));
-    vec3 binorm = normalize(cross(norm, tangent)); 
+    vec3 tgn = normalize(cross(norm, helper));
+    vec3 binorm = normalize(cross(norm, tgn)); 
 
-    return mat3(tangent, binorm, norm);
+    return mat3(tgn, binorm, norm);
 }
 
-/* Sampling the hemisphere around the given normal and biases it based on the given alpha */
+/* Sampling the hemisph around the given normal and biases it based on the given alpha */
 vec3 SampleHemi(vec3 norm, float alpha)
 {
     float cosTheta = pow(rand(), 1.0f/(alpha + 1.0f));
     float sinTheta = sqrt(max(0.0f, 1.0f - cosTheta*cosTheta));
     float phi = 2 * 3.141593f * rand();
-    vec3 tangentSpaceDir = vec3(cos(phi)*sinTheta, sin(phi)*sinTheta, cosTheta);
-    return GetTangentSpace(norm)*tangentSpaceDir;
+    vec3 tgnSpaceDir = vec3(cos(phi)*sinTheta, sin(phi)*sinTheta, cosTheta);
+    return GetTgnSpace(norm)*tgnSpaceDir;
 }
 
-bool intersectTriangle_MT97(Ray ray, vec3 vert0, vec3 vert1, vec3 vert2, inout float t, inout float u, inout float v)
+bool intersectTgl_MT97(Ray ray, vec3 vert0, vec3 vert1, vec3 vert2, inout float t, inout float u, inout float v)
 {
     vec3 edge1 = vert1 - vert0, edge2 = vert2 - vert0;
     vec3 pvec = cross(ray.dir, edge2);
@@ -153,7 +161,7 @@ void intersectRoom(Ray ray, inout RayHit bestHit)
 	{
 		pPt = vec3(0.0, 0.0, halfLen), pNorm = vec3(0.0, 0.0, -1.0);
 		denom = dot(pNorm, ray.dir);
-		if (abs(denom) > 0.0001f) // epsilon val can be changed
+		if (abs(denom) > 0.0001f) 
 		{
 			float t = dot(pPt - ray.org, pNorm)/denom;
 			if (t > 0.0001f) 
@@ -172,7 +180,7 @@ void intersectRoom(Ray ray, inout RayHit bestHit)
 	/* Up face */
 	pPt = vec3(0.0, halfLen, 0.0), pNorm = vec3(0.0, -1.0, 0.0);
 	denom = dot(pNorm, ray.dir);
-	if (abs(denom) > 0.0001f) // epsilon val can be changed
+	if (abs(denom) > 0.0001f) 
 	{
 		float t = dot(pPt - ray.org, pNorm)/denom;
 		if (t > 0.0001f) 
@@ -194,7 +202,7 @@ void intersectRoom(Ray ray, inout RayHit bestHit)
 	{
 		pPt = vec3(0.0, -halfLen, 0.0), pNorm = vec3(0.0, 1.0, 0.0);
 		denom = dot(pNorm, ray.dir);
-		if (abs(denom) > 0.0001f) // epsilon val can be changed
+		if (abs(denom) > 0.0001f) 
 		{
 			float t = dot(pPt - ray.org, pNorm)/denom;
 			if (t > 0.0001f) 
@@ -213,7 +221,7 @@ void intersectRoom(Ray ray, inout RayHit bestHit)
 	/* Right face */
 	pPt = vec3(halfLen, 0.0, 0.0), pNorm = vec3(-1.0, 0.0, 0.0);
 	denom = dot(pNorm, ray.dir);
-	if (abs(denom) > 0.0001f) // epsilon val can be changed
+	if (abs(denom) > 0.0001f) 
 	{
 		float t = dot(pPt - ray.org, pNorm)/denom;
 		if (t > 0.0001f) 
@@ -235,7 +243,7 @@ void intersectRoom(Ray ray, inout RayHit bestHit)
 	{
 		pPt = vec3(-halfLen, 0.0, 0.0), pNorm = vec3(1.0, 0.0, 0.0);
 		denom = dot(pNorm, ray.dir);
-		if (abs(denom) > 0.0001f) // epsilon val can be changed
+		if (abs(denom) > 0.0001f) 
 		{
 			float t = dot(pPt - ray.org, pNorm)/denom;
 			if (t > 0.0001f) 
@@ -274,7 +282,7 @@ vec3 drawBackground(vec3 rOrg, vec3 rDir)
 	/* Front face */
 	pPt = vec3(0.0, 0.0, -halfLen), pNorm = vec3(0.0, 0.0, 1.0);
 	denom = dot(pNorm, rDir);
-	if (abs(denom) > 0.0001f) // epsilon val can be changed
+	if (abs(denom) > 0.0001f) 
 	{
 		float t = dot(pPt - rOrg, pNorm)/denom;
 		if (t > 0.0001f) 
@@ -291,7 +299,7 @@ vec3 drawBackground(vec3 rOrg, vec3 rDir)
 	{
 		pPt = vec3(0.0, 0.0, halfLen), pNorm = vec3(0.0, 0.0, -1.0);
 		denom = dot(pNorm, rDir);
-		if (abs(denom) > 0.0001f) // epsilon val can be changed
+		if (abs(denom) > 0.0001f) 
 		{
 			float t = dot(pPt - rOrg, pNorm)/denom;
 			if (t > 0.0001f) 
@@ -309,7 +317,7 @@ vec3 drawBackground(vec3 rOrg, vec3 rDir)
 	/* Up face */
 	pPt = vec3(0.0, halfLen, 0.0), pNorm = vec3(0.0, -1.0, 0.0);
 	denom = dot(pNorm, rDir);
-	if (abs(denom) > 0.0001f) // epsilon val can be changed
+	if (abs(denom) > 0.0001f) 
 	{
 		float t = dot(pPt - rOrg, pNorm)/denom;
 		if (t > 0.0001f) 
@@ -330,7 +338,7 @@ vec3 drawBackground(vec3 rOrg, vec3 rDir)
 	{
 		pPt = vec3(0.0, -halfLen, 0.0), pNorm = vec3(0.0, 1.0, 0.0);
 		denom = dot(pNorm, rDir);
-		if (abs(denom) > 0.0001f) // epsilon val can be changed
+		if (abs(denom) > 0.0001f) 
 		{
 			float t = dot(pPt - rOrg, pNorm)/denom;
 			if (t > 0.0001f) 
@@ -348,7 +356,7 @@ vec3 drawBackground(vec3 rOrg, vec3 rDir)
 	/* Right face */
 	pPt = vec3(halfLen, 0.0, 0.0), pNorm = vec3(-1.0, 0.0, 0.0);
 	denom = dot(pNorm, rDir);
-	if (abs(denom) > 0.0001f) // epsilon val can be changed
+	if (abs(denom) > 0.0001f) 
 	{
 		float t = dot(pPt - rOrg, pNorm)/denom;
 		if (t > 0.0001f) 
@@ -369,7 +377,7 @@ vec3 drawBackground(vec3 rOrg, vec3 rDir)
 	{
 		pPt = vec3(-halfLen, 0.0, 0.0), pNorm = vec3(1.0, 0.0, 0.0);
 		denom = dot(pNorm, rDir);
-		if (abs(denom) > 0.0001f) // epsilon val can be changed
+		if (abs(denom) > 0.0001f) 
 		{
 			float t = dot(pPt - rOrg, pNorm)/denom;
 			if (t > 0.0001f) 
@@ -404,11 +412,11 @@ void intersectGroundPlane(Ray ray, inout RayHit bestHit)
 	}
 }
 
-/* Testing the intersection of a ray and a sphere and modifying the previous best hit if the ground is visible to that ray */
-void intersectSphere(Ray ray, inout RayHit bestHit, Sphere sphere)
+/* Testing the intersection of a ray and a sph and modifying the previous best hit if the ground is visible to that ray */
+void intersectSph(Ray ray, inout RayHit bestHit, Sph sph)
 {
-	vec3 d = ray.org - sphere.pos;
-	float p1 = -dot(ray.dir, d), p2sqr = p1*p1 - dot(d, d) + sphere.rad*sphere.rad;
+	vec3 d = ray.org - sph.pos;
+	float p1 = -dot(ray.dir, d), p2sqr = p1*p1 - dot(d, d) + sph.rad*sph.rad;
     if (p2sqr < 0)
         return;
     float p2 = sqrt(p2sqr);
@@ -417,11 +425,11 @@ void intersectSphere(Ray ray, inout RayHit bestHit, Sphere sphere)
     {
         bestHit.dist = t;
         bestHit.pos = ray.org + t*ray.dir;
-        bestHit.norm = normalize(bestHit.pos - sphere.pos);
-        bestHit.albedo = sphere.albedo;
-        bestHit.specular = sphere.specular;
-		bestHit.emission = sphere.emission;
-		bestHit.smoothness = sphere.smoothness;
+        bestHit.norm = normalize(bestHit.pos - sph.pos);
+        bestHit.albedo = sph.albedo;
+        bestHit.specular = sph.specular;
+		bestHit.emission = sph.emission;
+		bestHit.smoothness = sph.smoothness;
 		bestHit.skybox = false;
     }
 }
@@ -432,12 +440,12 @@ RayHit Trace(Ray ray)
 	RayHit bestHit = CreateRayHit();
 	intersectRoom(ray, bestHit);
 	intersectGroundPlane(ray, bestHit);
-	//intersectSphere(ray, bestHit, Sphere(vec3(-17.0f, -9.0, -62.0f), 7.0, vec3(0.0), vec3(1.0, 0.78f, 0.34f), 1.0, vec3(1.0)));
-	intersectSphere(ray, bestHit, Sphere(vec3(-15.0f, -12.6, -30.0f), 4.0, vec3(0.0), vec3(1.0, 1.0f, 1.0f), 1.2, vec3(0.0)));
-	intersectSphere(ray, bestHit, Sphere(vec3(17.0f, -7.0, -45.0f), 3.0, vec3(1.0, 1.0, 1.0), vec3(1.0), 0.8, vec3(0.0, 10.0, 10.0)));
-	intersectSphere(ray, bestHit, Sphere(vec3(-3.0f, -9.6, -75.0f), 7.0, vec3(0.0, 0.0, 0.0), vec3(1.0, 0.35, 0.45), 0.1, vec3(0.0)));
-	intersectSphere(ray, bestHit, Sphere(vec3(1.0f, -14.6, -62.0f), 2.0, vec3(0.0, 0.0, 0.0), vec3(1.0, 1.0, 1.0), 0.0, vec3(0.0)));
-	//intersectSphere(ray, bestHit, Sphere(vec3(8.0f, -11.0, -50.0f), 5.0, vec3(0.0, 0.0, 0.0), vec3(1.0, 1.0, 0.0), 0.8, vec3(1.0)));
+	//intersectSph(ray, bestHit, Sph(vec3(-17.0f, -9.0, -62.0f), 7.0, vec3(0.0), vec3(1.0, 0.78f, 0.34f), 1.0, vec3(1.0)));
+	intersectSph(ray, bestHit, Sph(vec3(-15.0f, -12.6, -30.0f), 4.0, vec3(0.0), vec3(1.0, 1.0f, 1.0f), 1.2, vec3(0.0)));
+	intersectSph(ray, bestHit, Sph(vec3(17.0f, -7.0, -45.0f), 3.0, vec3(1.0, 1.0, 1.0), vec3(1.0), 0.8, vec3(0.0, 10.0, 10.0)));
+	intersectSph(ray, bestHit, Sph(vec3(-3.0f, -9.6, -75.0f), 7.0, vec3(0.0, 0.0, 0.0), vec3(1.0, 0.35, 0.45), 0.1, vec3(0.0)));
+	intersectSph(ray, bestHit, Sph(vec3(1.0f, -14.6, -62.0f), 2.0, vec3(0.0, 0.0, 0.0), vec3(1.0, 1.0, 1.0), 0.0, vec3(0.0)));
+	//intersectSph(ray, bestHit, Sph(vec3(8.0f, -11.0, -50.0f), 5.0, vec3(0.0, 0.0, 0.0), vec3(1.0, 1.0, 0.0), 0.8, vec3(1.0)));
 	
 	vec3 wallEmission = vec3(0);
 	vec3 wallSpecular = vec3(0);
@@ -448,7 +456,7 @@ RayHit Trace(Ray ray)
 	vec3 v1 = vec3(15, -17, -65);
 	vec3 v2 = vec3(-40, 6, -65);
 	float t, u, v;
-	if (intersectTriangle_MT97(ray, v0, v1, v2, t, u, v))
+	if (intersectTgl_MT97(ray, v0, v1, v2, t, u, v))
 	{
 		if (t > 0 && t < bestHit.dist)
 		{
@@ -466,7 +474,7 @@ RayHit Trace(Ray ray)
 	v0 = vec3(-40, 6, -65);
 	v1 = vec3(15, -17, -65);
 	v2 = vec3(15, 6, -65);
-	if (intersectTriangle_MT97(ray, v0, v1, v2, t, u, v))
+	if (intersectTgl_MT97(ray, v0, v1, v2, t, u, v))
 	{
 		if (t > 0 && t < bestHit.dist)
 		{
@@ -484,7 +492,7 @@ RayHit Trace(Ray ray)
 	v0 = vec3(-30, 6, -65);
 	v1 = vec3(-25, 6, 35);
 	v2 = vec3(-25, -17, 35);
-	if (intersectTriangle_MT97(ray, v0, v1, v2, t, u, v))
+	if (intersectTgl_MT97(ray, v0, v1, v2, t, u, v))
 	{
 		if (t > 0 && t < bestHit.dist)
 		{
@@ -502,7 +510,7 @@ RayHit Trace(Ray ray)
 	v0 = vec3(-30, 6, -65);
 	v1 = vec3(-25, -17, 35);
 	v2 = vec3(-30, -17, -65);
-	if (intersectTriangle_MT97(ray, v0, v1, v2, t, u, v))
+	if (intersectTgl_MT97(ray, v0, v1, v2, t, u, v))
 	{
 		if (t > 0 && t < bestHit.dist)
 		{
@@ -520,7 +528,7 @@ RayHit Trace(Ray ray)
 	v0 = vec3(-25, 6, 15);
 	v1 = vec3(15, -17, 15);
 	v2 = vec3(-25, -17, 15);
-	if (intersectTriangle_MT97(ray, v0, v1, v2, t, u, v))
+	if (intersectTgl_MT97(ray, v0, v1, v2, t, u, v))
 	{
 		if (t > 0 && t < bestHit.dist)
 		{
@@ -538,7 +546,7 @@ RayHit Trace(Ray ray)
 	v0 = vec3(-25, 6, 15);
 	v1 = vec3(15, 6, 15);
 	v2 = vec3(15, -17, 15);
-	if (intersectTriangle_MT97(ray, v0, v1, v2, t, u, v))
+	if (intersectTgl_MT97(ray, v0, v1, v2, t, u, v))
 	{
 		if (t > 0 && t < bestHit.dist)
 		{
@@ -556,7 +564,7 @@ RayHit Trace(Ray ray)
 	v0 = vec3(15, 6, 15);
 	v1 = vec3(15, 6, -35);
 	v2 = vec3(15, -17, -35);
-	if (intersectTriangle_MT97(ray, v0, v1, v2, t, u, v))
+	if (intersectTgl_MT97(ray, v0, v1, v2, t, u, v))
 	{
 		if (t > 0 && t < bestHit.dist)
 		{
@@ -574,7 +582,7 @@ RayHit Trace(Ray ray)
 	v0 = vec3(15, 6, 15);
 	v1 = vec3(15, -17, -35);
 	v2 = vec3(15, -17, 15);
-	if (intersectTriangle_MT97(ray, v0, v1, v2, t, u, v))
+	if (intersectTgl_MT97(ray, v0, v1, v2, t, u, v))
 	{
 		if (t > 0 && t < bestHit.dist)
 		{
@@ -592,7 +600,7 @@ RayHit Trace(Ray ray)
 	v0 = vec3(15, 6, -65);
 	v1 = vec3(10, -17, -30);
 	v2 = vec3(15, -17, -65);
-	if (intersectTriangle_MT97(ray, v0, v1, v2, t, u, v))
+	if (intersectTgl_MT97(ray, v0, v1, v2, t, u, v))
 	{
 		if (t > 0 && t < bestHit.dist)
 		{
@@ -610,7 +618,7 @@ RayHit Trace(Ray ray)
 	v2 = vec3(15, 6, -65);
 	v1 = vec3(10, -17, -30);
 	v0 = vec3(15, -17, -65);
-	if (intersectTriangle_MT97(ray, v0, v1, v2, t, u, v))
+	if (intersectTgl_MT97(ray, v0, v1, v2, t, u, v))
 	{
 		if (t > 0 && t < bestHit.dist)
 		{
@@ -628,7 +636,7 @@ RayHit Trace(Ray ray)
 	v2 = vec3(15, 6, -65);
 	v1 = vec3(10, 6, -30);
 	v0 = vec3(10, -17, -30);
-	if (intersectTriangle_MT97(ray, v0, v1, v2, t, u, v))
+	if (intersectTgl_MT97(ray, v0, v1, v2, t, u, v))
 	{
 		if (t > 0 && t < bestHit.dist)
 		{
@@ -646,7 +654,7 @@ RayHit Trace(Ray ray)
 	v0 = vec3(15, 6, -65);
 	v1 = vec3(10, 6, -30);
 	v2 = vec3(10, -17, -30);
-	if (intersectTriangle_MT97(ray, v0, v1, v2, t, u, v))
+	if (intersectTgl_MT97(ray, v0, v1, v2, t, u, v))
 	{
 		if (t > 0 && t < bestHit.dist)
 		{
@@ -664,7 +672,7 @@ RayHit Trace(Ray ray)
 	v0 = vec3(-40, 6, 20);
 	v1 = vec3(-40, 6, -65);
 	v2 = vec3(15, 6, -65);
-	if (intersectTriangle_MT97(ray, v0, v1, v2, t, u, v))
+	if (intersectTgl_MT97(ray, v0, v1, v2, t, u, v))
 	{
 		if (t > 0 && t < bestHit.dist)
 		{
@@ -682,7 +690,7 @@ RayHit Trace(Ray ray)
 	v0 = vec3(15, 6, 15);
 	v1 = vec3(-40, 6, 15);
 	v2 = vec3(15, 6, -65);
-	if (intersectTriangle_MT97(ray, v0, v1, v2, t, u, v))
+	if (intersectTgl_MT97(ray, v0, v1, v2, t, u, v))
 	{
 		if (t > 0 && t < bestHit.dist)
 		{
@@ -773,14 +781,13 @@ struct PathNode
 	int nextM;
 };
 
-// change in Main.cpp as well
 #define NUM_HITS 10
 #define SAMPLES 10
 #define MUTATIONS 0
 
 // 10, 100, 0 converges after 50 frames. Took 7 minutes
 
-//PathNode nodePool[NUM_HITS*(MUTATIONS + SAMPLES) + 1];
+PathNode nodePool[NUM_HITS*(MUTATIONS + SAMPLES) + 1];
 
 int size = 0;
 int newPathNode()
@@ -790,9 +797,6 @@ int newPathNode()
 	return oldSize;
 }
 
-struct Path {
-	PathNode nodes[NUM_HITS];
-};
 
 /* Assuming tentative transition function is symmetric. */
 
@@ -813,11 +817,9 @@ void main()
 
 	int nSamples = SAMPLES;
 	int lenX;
+	int startX;
+	int currentX;
 	vec3 result = vec3(0.0, 0.0, 0.0);
-	bool flag = false;
-
-	Path px;
-	Path py;
 
 	for (int j = 0; j < nSamples; j++)
 	{
@@ -828,84 +830,134 @@ void main()
 		ray.nrg = vec3(1.0f);
 
 		lenX = 0;
+		startX = -1;
+		currentX = startX;
 
 		for (int i = 1; i <= numHits; i++)
 		{
 			RayHit hit = Trace(ray);
 			result += ray.nrg*Shade(ray,hit); 
-
-			px.nodes[i-1].hit = hit;
-			px.nodes[i-1].ray = ray;
-			px.nodes[i-1].result = result;
-
-			lenX++;
+		
+			if (mutations > 0)
+			{
+				if (currentX == -1)
+				{
+					startX = currentX = newPathNode();
+				}
+				else
+				{
+					nodePool[currentX].nextA = newPathNode();
+					currentX = nodePool[currentX].nextA;
+				}
+				nodePool[currentX].hit = hit;
+				nodePool[currentX].ray = ray;
+				nodePool[currentX].result = result;
+				lenX++;
+			}
 
 			if (ray.nrg.x == 0.0 && ray.nrg.y == 0.0 && ray.nrg.z == 0.0)
 				break;
 		}
 	}
 
+	// currentX is now Last x
+
 	result /= nSamples;
 
-	vec3 colorX = result;
-	float luminanceX = luminance(colorX);
+	int n = startX;
+	while (n <= currentX)
+	{
+		nodePool[n].result /= nSamples;
+		n = nodePool[n].nextA;
+	}
 
 	vec3 mutateResult = vec3(0);
+
+	float luminanceX = luminance(nodePool[currentX].result);
+	vec3 colorX = nodePool[currentX].result;
+
 	mutateResult += colorX;
 
-	for(int j = 0; j < mutations; j++) {
-		py = px;
+	int tmp;
+
+	for (int i = 0; i < mutations; i++) {
+		//Path y = path;
 
 		int lenY = lenX;
-
+		int currentY = startX;
+		
 		int ld = getLd(lenY);
-		if(ld != 0) {
+		if (ld != 0)
+		{
 			lenY -= ld;
 
+			for (int j = 0; j < lenY-1; j++)
+				currentY = nodePool[currentY].nextA;
+			
+			int divergeNodeId = currentY;
 			int redLen = lenY;
-
-			Ray ray = py.nodes[lenY-1].ray;
-			vec3 result = py.nodes[lenY-1].result;
-
-			for(int i = redLen + 1; i <= numHits; i++) {
+			Ray ray = nodePool[currentY].ray;
+			vec3 result = nodePool[currentY].result;
+			
+			for (int i = redLen + 1; i <= numHits; i++)
+			{
 				RayHit hit = Trace(ray);
 				result += ray.nrg * Shade(ray, hit);
 
-				py.nodes[i-1].ray = ray;
-				py.nodes[i-1].hit = hit;
-				py.nodes[i-1].result = result;
+				int newNode = newPathNode();
+				nodePool[newNode].hit = hit;
+				nodePool[newNode].ray = ray;
+				nodePool[newNode].result = result;
 
+				if (i == redLen + 1)
+				{
+					nodePool[currentY].nextM = newNode;
+				}
+				else
+				{
+					nodePool[currentY].nextA = newNode;
+				}
+				currentY = newNode;
 				lenY++;
 
 				if (ray.nrg.x == 0.0 && ray.nrg.y == 0.0 && ray.nrg.z == 0.0)
 					break;
 			}
-
-			float luminanceY = luminance(result);
-			vec3 colorY = result;
+			
+			// currentY is lastY
+			
+			float luminanceY = luminance(nodePool[currentY].result);
+			vec3 colorY = nodePool[currentY].result;
 
 			float axy = min(1, luminanceY / luminanceX);
 
 			mutateResult += axy * colorX + (1-axy) * colorY;
 
-			if(rand() < axy) {
-				px = py;
+			if (rand() < axy)
+			{
+				//path = y;
+
+				//swap nextM and nextA of divergeNodeId
+				tmp = nodePool[divergeNodeId].nextM;
+				nodePool[divergeNodeId].nextM = nodePool[divergeNodeId].nextA;
+				nodePool[divergeNodeId].nextA = tmp;
+
+				lenX = lenY;
+
 				colorX = colorY;
 				luminanceX = luminanceY;
-				lenX = lenY;
 			}
 		}
-		else {
+
+		else
+		{
 			mutateResult += colorX;
 		}
 	}
-
-	if (mutations > 0) {
-		pix = vec4(mutateResult/(mutations + 1), 1.0);
-	}
-	else {
-		pix = vec4(result, 1.0);
-	}
 	
+	if (mutations > 0)
+		pix = vec4(mutateResult/(mutations + 1), 1.0);	
+	else
+		pix = vec4(result, 1.0);
 	imageStore(img_output, pixCoords, pix);
 }

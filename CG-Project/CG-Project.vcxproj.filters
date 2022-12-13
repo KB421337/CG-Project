@@ -24,10 +24,16 @@
     <ClCompile Include="stb_image.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ShaderImpl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stb_image.h">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MltPixel.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -38,12 +44,6 @@
       <Filter>Source Files</Filter>
     </None>
     <None Include="shader.glsl">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="shader2.glsl">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="shader3.glsl">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>
